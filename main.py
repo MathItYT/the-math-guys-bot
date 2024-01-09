@@ -66,6 +66,7 @@ async def gpt(interaction: Interaction, question: str):
     if current_day != datetime.now().day:
         current_day = datetime.now().day
         current_questions = 0
+        messages = messages[:1]
     if not question:
         await interaction.response.send_message("Por favor, haz una pregunta.")
         return
