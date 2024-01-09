@@ -83,7 +83,7 @@ async def gpt(interaction: Interaction, question: str):
         presence_penalty=0,
     ).choices[0].message.content
     print(f"[GPT-3] {interaction.user}: {answer}")
-    await interaction.response.edit_message(f"""Pregunta: {question}
+    await interaction.response.edit_message(content=f"""Pregunta: {question}
 
 Respuesta: {answer}
 
