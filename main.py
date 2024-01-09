@@ -72,6 +72,7 @@ async def gpt(interaction: Interaction, question: str):
         return
     print(f"[GPT-3] {interaction.user}: {question}")
     messages.append({"role": "user", "content": question})
+    await interaction.response.defer()
     answer: str = openai_client.chat.completions.create(
         messages=messages,
         model="gpt-3.5-turbo-1106",
@@ -82,7 +83,7 @@ async def gpt(interaction: Interaction, question: str):
         presence_penalty=0,
     ).choices[0].message.content
     print(f"[GPT-3] {interaction.user}: {answer}")
-    await interaction.response.send_message(f"""Pregunta: {question}
+    await interaction.response.edit_message(f"""Pregunta: {question}
 
 Respuesta: {answer}
 
