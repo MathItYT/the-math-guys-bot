@@ -20,8 +20,7 @@ def is_spam(message_content: str, client: OpenAI) -> bool:
         presence_penalty=0,
     ).choices[0].message.content
     print(f"[is_spam] {message_content}: {openai_response}")
-    return ("yes" in openai_response.lower()) or ("si" in openai_response.lower()) or ("sí" in openai_response.lower())
-
+    return ("y" == openai_response.lower()[0]) or ("s" == openai_response.lower()[0])
 
 async def handle_message(message: Message, client: OpenAI):
     if is_spam(message.content, client):
