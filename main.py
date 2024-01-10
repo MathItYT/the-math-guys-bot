@@ -102,7 +102,7 @@ async def crear_tablero_rdls(interaction: Interaction, titulo: str):
         await interaction.user.send(f"El dataframe {titulo} ya existe.")
         return
     df = pd.DataFrame({"Competidor": [], "Puntos": []})
-    df.to_csv(f"{titulo}.csv")
+    df.to_csv(f"{titulo}.csv", index=False)
     await interaction.user.send(f"Se ha creado el dataframe {titulo}.")
 
 
@@ -111,6 +111,9 @@ async def crear_tablero_rdls(interaction: Interaction, titulo: str):
 @app_commands.checks.has_permissions(administrator=True)
 async def tabla_al_dm(interaction: Interaction, titulo: str):
     print(f"[Pandas] {interaction.user}: {titulo}")
+    if not Path(f"{titulo}.csv").exists():
+        await interaction.user.send(f"El dataframe {titulo} no existe.")
+        return
     await interaction.user.send(embed=Embed(title=titulo, description=f"```\n{pd.read_csv(f'{titulo}.csv').to_string()}\n```"))
     print(f"[Pandas] {interaction.user}: {titulo} enviado al DM del usuario.")
 
@@ -120,12 +123,17 @@ async def tabla_al_dm(interaction: Interaction, titulo: str):
 @app_commands.checks.has_permissions(administrator=True)
 async def agregar_competidor(interaction: Interaction, titulo: str, competidor: str):
     print(f"[Pandas] {interaction.user}: {titulo}, {competidor}")
+    if not Path(f"{titulo}.csv").exists():
+        await interaction.user.send(f"El dataframe {titulo} no existe.")
+        return
     df = pd.read_csv(f"{titulo}.csv")
     if competidor in df["Competidor"].to_list():
         await interaction.user.send(f"El competidor {competidor} ya está en el dataframe {titulo}.")
         return
     df = pd.concat([df, pd.DataFrame({"Competidor": [competidor], "Puntos": [0]})])
-    df.to_csv(f"{titulo}.csv")
+    df = df.sort_values(by="Puntos")
+    df.index += 1
+    df.to_csv(f"{titulo}.csv", index=False)
     await interaction.user.send(f"El competidor {competidor} ha sido agregado al dataframe {titulo}.")
 
 
@@ -134,11 +142,16 @@ async def agregar_competidor(interaction: Interaction, titulo: str, competidor: 
 @app_commands.checks.has_permissions(administrator=True)
 async def sumar_puntos(interaction: Interaction, titulo: str, competidor: str, puntos: int):
     print(f"[Pandas] {interaction.user}: {titulo}, {competidor}, {puntos}")
+    if not Path(f"{titulo}.csv").exists():
+        await interaction.user.send(f"El dataframe {titulo} no existe.")
+        return
     df = pd.read_csv(f"{titulo}.csv")
     if competidor not in df["Competidor"].to_list():
         await interaction.user.send(f"El competidor {competidor} no está en el dataframe {titulo}.")
     df.loc[df["Competidor"] == competidor, "Puntos"] += puntos
-    df.to_csv(f"{titulo}.csv")
+    df = df.sort_values(by="Puntos")
+    df.index += 1
+    df.to_csv(f"{titulo}.csv", index=False)
     await interaction.user.send(f"Se le han sumado {puntos} puntos al competidor {competidor}.")
 
 
