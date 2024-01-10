@@ -2,9 +2,10 @@ from dotenv import load_dotenv
 import os
 from typing import Final
 from openai import OpenAI
-from discord import Message, Intents, Member, Game, Interaction, Client, Object, app_commands
+from discord import Message, Intents, Member, Game, Interaction, Client, Object, Embed, app_commands
 from the_math_guys_bot.handle_message import handle_message
 from datetime import datetime
+import pandas as pd
 
 
 load_dotenv()
@@ -89,6 +90,52 @@ Respuesta: {answer}
 
 Quedan {MAX_GPT_QUESTIONS_PER_DAY - current_questions - 1} preguntas hoy.""")
     current_questions += 1
+
+
+@tree.command(name="crear-tablero-rdls", description="Crea un dataframe de pandas", guild=Object(id=SERVER_ID))
+@app_commands.describe(titulo="El título del dataframe", columnas="Las columnas del dataframe separadas por comas")
+@app_commands.checks.has_permissions(administrator=True)
+async def crear_tablero_rdls(interaction: Interaction, titulo: str):
+    print(f"[Pandas] {interaction.user}: {titulo}, {columnas}")
+    columnas = ["Competidor", "Puntos"]
+    df = pd.DataFrame(columns=columnas)
+    df.to_csv(f"{titulo}.csv")
+    await interaction.user.send(f"Se ha creado el dataframe {titulo} con las columnas {columnas}.")
+
+
+@tree.command(name="tabla-al-dm-rdls", description="Envía un dataframe de pandas al DM del usuario", guild=Object(id=SERVER_ID))
+@app_commands.describe(titulo="El título del dataframe")
+@app_commands.checks.has_permissions(administrator=True)
+async def tabla_al_dm(interaction: Interaction, titulo: str):
+    print(f"[Pandas] {interaction.user}: {titulo}")
+    await interaction.user.send(embed=Embed(title=titulo, description=pd.read_csv(f"{titulo}.csv").to_string()))
+    print(f"[Pandas] {interaction.user}: {titulo} enviado al DM del usuario.")
+
+
+@tree.command(name="agregar-fila-rdls", description="Agrega una fila a un dataframe de pandas", guild=Object(id=SERVER_ID))
+@app_commands.describe(titulo="El título del dataframe", fila="La fila a agregar")
+@app_commands.checks.has_permissions(administrator=True)
+async def agregar_competidor(interaction: Interaction, titulo: str, competidor: str):
+    print(f"[Pandas] {interaction.user}: {titulo}, {competidor}")
+    df = pd.read_csv(f"{titulo}.csv")
+    if competidor in df["Competidor"].to_list():
+        await interaction.user.send(f"El competidor {competidor} ya está en el dataframe {titulo}.")
+    df = df.append({"Competidor": competidor, "Puntos": 0}, ignore_index=True)
+    df.to_csv(f"{titulo}.csv")
+    await interaction.user.send(f"El competidor {competidor} ha sido agregado al dataframe {titulo}.")
+
+
+@tree.command(name="suma-puntos-rdls", description="Suma puntos a un competidor", guild=Object(id=SERVER_ID))
+@app_commands.describe(titulo="El título del dataframe", competidor="El competidor al que se le sumarán los puntos", puntos="Los puntos a sumar")
+@app_commands.checks.has_permissions(administrator=True)
+async def sumar_puntos(interaction: Interaction, titulo: str, competidor: str, puntos: int):
+    print(f"[Pandas] {interaction.user}: {titulo}, {competidor}, {puntos}")
+    df = pd.read_csv(f"{titulo}.csv")
+    if competidor not in df["Competidor"].to_list():
+        await interaction.user.send(f"El competidor {competidor} no está en el dataframe {titulo}.")
+    df.loc[df["Competidor"] == competidor, "Puntos"] += puntos
+    df.to_csv(f"{titulo}.csv")
+    await interaction.user.send(f"Se le han sumado {puntos} puntos al competidor {competidor}.")
 
 
 def main():

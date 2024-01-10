@@ -10,6 +10,7 @@ python = ">=3.9,<4.0"
 discord-py = "^2.3.2"
 openai = "^1.7.0"
 python-dotenv = "^1.0.0"
+pandas = "^2.1.4"
 
 
 [build-system]
