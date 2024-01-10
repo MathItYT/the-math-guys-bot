@@ -5,6 +5,7 @@ from openai import OpenAI
 from discord import Message, Intents, Member, Game, Interaction, Client, Object, Embed, app_commands
 from the_math_guys_bot.handle_message import handle_message
 from datetime import datetime
+from pathlib import Path
 import pandas as pd
 
 
@@ -93,14 +94,16 @@ Quedan {MAX_GPT_QUESTIONS_PER_DAY - current_questions - 1} preguntas hoy.""")
 
 
 @tree.command(name="crear-tablero-rdls", description="Crea un dataframe de pandas", guild=Object(id=SERVER_ID))
-@app_commands.describe(titulo="El título del dataframe", columnas="Las columnas del dataframe separadas por comas")
+@app_commands.describe(titulo="El título del dataframe")
 @app_commands.checks.has_permissions(administrator=True)
 async def crear_tablero_rdls(interaction: Interaction, titulo: str):
-    print(f"[Pandas] {interaction.user}: {titulo}, {columnas}")
-    columnas = ["Competidor", "Puntos"]
-    df = pd.DataFrame(columns=columnas)
+    print(f"[Pandas] {interaction.user}: {titulo}")
+    if Path(f"{titulo}.csv").exists():
+        await interaction.user.send(f"El dataframe {titulo} ya existe.")
+        return
+    df = pd.DataFrame({"Competidor": [], "Puntos": []})
     df.to_csv(f"{titulo}.csv")
-    await interaction.user.send(f"Se ha creado el dataframe {titulo} con las columnas {columnas}.")
+    await interaction.user.send(f"Se ha creado el dataframe {titulo}.")
 
 
 @tree.command(name="tabla-al-dm-rdls", description="Envía un dataframe de pandas al DM del usuario", guild=Object(id=SERVER_ID))
@@ -108,19 +111,20 @@ async def crear_tablero_rdls(interaction: Interaction, titulo: str):
 @app_commands.checks.has_permissions(administrator=True)
 async def tabla_al_dm(interaction: Interaction, titulo: str):
     print(f"[Pandas] {interaction.user}: {titulo}")
-    await interaction.user.send(embed=Embed(title=titulo, description=pd.read_csv(f"{titulo}.csv").to_string()))
+    await interaction.user.send(embed=Embed(title=titulo, description=f"```\n{pd.read_csv(f"{titulo}.csv").to_string()}\n```"))
     print(f"[Pandas] {interaction.user}: {titulo} enviado al DM del usuario.")
 
 
 @tree.command(name="agregar-fila-rdls", description="Agrega una fila a un dataframe de pandas", guild=Object(id=SERVER_ID))
-@app_commands.describe(titulo="El título del dataframe", fila="La fila a agregar")
+@app_commands.describe(titulo="El título del dataframe", competidor="El competidor a agregar")
 @app_commands.checks.has_permissions(administrator=True)
 async def agregar_competidor(interaction: Interaction, titulo: str, competidor: str):
     print(f"[Pandas] {interaction.user}: {titulo}, {competidor}")
     df = pd.read_csv(f"{titulo}.csv")
     if competidor in df["Competidor"].to_list():
         await interaction.user.send(f"El competidor {competidor} ya está en el dataframe {titulo}.")
-    df = df.append({"Competidor": competidor, "Puntos": 0}, ignore_index=True)
+        return
+    df = pd.concat([df, pd.DataFrame({"Competidor": [competidor], "Puntos": [0]})])
     df.to_csv(f"{titulo}.csv")
     await interaction.user.send(f"El competidor {competidor} ha sido agregado al dataframe {titulo}.")
 
