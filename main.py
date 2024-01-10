@@ -111,7 +111,7 @@ async def crear_tablero_rdls(interaction: Interaction, titulo: str):
 @app_commands.checks.has_permissions(administrator=True)
 async def tabla_al_dm(interaction: Interaction, titulo: str):
     print(f"[Pandas] {interaction.user}: {titulo}")
-    await interaction.user.send(embed=Embed(title=titulo, description=f"```\n{pd.read_csv(f"{titulo}.csv").to_string()}\n```"))
+    await interaction.user.send(embed=Embed(title=titulo, description=f"```\n{pd.read_csv(f'{titulo}.csv').to_string()}\n```"))
     print(f"[Pandas] {interaction.user}: {titulo} enviado al DM del usuario.")
 
 
