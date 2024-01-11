@@ -2,7 +2,7 @@ from dotenv import load_dotenv
 import os
 from typing import Final
 from openai import OpenAI
-from discord import Message, Intents, Member, Game, Interaction, Client, Object, Embed, app_commands
+from discord import Message, Intents, Member, Game, Interaction, Client, Object, Embed, RawReactionActionEvent, app_commands
 from the_math_guys_bot.handle_message import handle_message
 from datetime import datetime
 from pathlib import Path
@@ -16,6 +16,17 @@ GENERAL_ID: Final[int] = 1045453709221568535
 SERVER_ID: Final[int] = 1045453708642758657
 MAX_GPT_QUESTIONS_PER_DAY: Final[int] = 5
 current_questions: int = 0
+EMOJI_MAP: Final[dict[int, str]] = {
+    1: ":one:",
+    2: ":two:",
+    3: ":three:",
+    4: ":four:",
+    5: ":five:",
+    6: ":six:",
+    7: ":seven:",
+    8: ":eight:",
+    9: ":nine:"
+}
 
 intents: Intents = Intents.all()
 client: Client = Client(intents=intents)
@@ -91,68 +102,48 @@ Respuesta: {answer}
 
 Quedan {MAX_GPT_QUESTIONS_PER_DAY - current_questions - 1} preguntas hoy.""")
     current_questions += 1
+    messages.append({"role": "assistant", "content": answer})
 
 
-@tree.command(name="crear-tablero-rdls", description="Crea un dataframe de pandas", guild=Object(id=SERVER_ID))
-@app_commands.describe(titulo="El título del dataframe")
-@app_commands.checks.has_permissions(administrator=True)
-async def crear_tablero_rdls(interaction: Interaction, titulo: str):
-    print(f"[Pandas] {interaction.user}: {titulo}")
-    if Path(f"{titulo}.csv").exists():
-        await interaction.user.send(f"El dataframe {titulo} ya existe.")
+@tree.command(name="crear-encuesta", description="Crea una encuesta", guild=Object(id=SERVER_ID))
+@app_commands.describe(pregunta="La pregunta que los usuarios deberán responder", opciones="Las opciones de la encuesta separadas por comas (máximo 9)")
+async def crear_encuesta(interaction: Interaction, pregunta: str, opciones: str):
+    print(f"[Encuesta] {interaction.user}: {pregunta}, {opciones}")
+    if not opciones or not pregunta:
+        await interaction.response.send_message("Por favor, ingresa las opciones separadas por comas.")
         return
-    df = pd.DataFrame({"Competidor": [], "Puntos": []})
-    df.to_csv(f"{titulo}.csv", index=False)
-    await interaction.user.send(f"Se ha creado el dataframe {titulo}.")
-
-
-@tree.command(name="tabla-al-dm-rdls", description="Envía un dataframe de pandas al DM del usuario", guild=Object(id=SERVER_ID))
-@app_commands.describe(titulo="El título del dataframe")
-@app_commands.checks.has_permissions(administrator=True)
-async def tabla_al_dm(interaction: Interaction, titulo: str):
-    print(f"[Pandas] {interaction.user}: {titulo}")
-    if not Path(f"{titulo}.csv").exists():
-        await interaction.user.send(f"El dataframe {titulo} no existe.")
+    await interaction.response.defer()
+    opciones = opciones.split(",")
+    if len(opciones) > 9:
+        await interaction.followup.send("No puedes tener más de 9 opciones.")
         return
-    await interaction.user.send(embed=Embed(title=titulo, description=f"```\n{pd.read_csv(f'{titulo}.csv').to_string()}\n```"))
-    print(f"[Pandas] {interaction.user}: {titulo} enviado al DM del usuario.")
+    opciones_emoji: str = ""
+    for i, opcion in enumerate(opciones, start=1):
+        opciones_emoji += f"{EMOJI_MAP[i]}: {opcion}\n"
+    embed = Embed(title=pregunta,
+                  description=f"Reacciona con el emoji correspondiente a la opción que quieras elegir.\n\n{opciones_emoji}")
+    embed.set_footer(text=f"Encuesta creada por {interaction.user}")
+    message: Message = await interaction.followup.send(embed=embed, wait=True)
+    for i in range(1, len(opciones) + 1):
+        await message.add_reaction(EMOJI_MAP[i])
+    with open("polls_ids.txt", "a") as f:
+        f.write(f"{message.id}\n")
 
 
-@tree.command(name="agregar-fila-rdls", description="Agrega una fila a un dataframe de pandas", guild=Object(id=SERVER_ID))
-@app_commands.describe(titulo="El título del dataframe", competidor="El competidor a agregar")
-@app_commands.checks.has_permissions(administrator=True)
-async def agregar_competidor(interaction: Interaction, titulo: str, competidor: str):
-    print(f"[Pandas] {interaction.user}: {titulo}, {competidor}")
-    if not Path(f"{titulo}.csv").exists():
-        await interaction.user.send(f"El dataframe {titulo} no existe.")
+@client.event
+async def on_raw_reaction_add(payload: RawReactionActionEvent):
+    message_id: int = payload.message_id
+    if message_id not in [int(line) for line in open("polls_ids.txt", "r").readlines()]:
         return
-    df = pd.read_csv(f"{titulo}.csv")
-    if competidor in df["Competidor"].to_list():
-        await interaction.user.send(f"El competidor {competidor} ya está en el dataframe {titulo}.")
+    message: Message = await client.get_channel(payload.channel_id).fetch_message(message_id)
+    if not message.embeds:
         return
-    df = pd.concat([df, pd.DataFrame({"Competidor": [competidor], "Puntos": [0]})])
-    df = df.sort_values(by="Puntos")
-    df.index += 1
-    df.to_csv(f"{titulo}.csv", index=False)
-    await interaction.user.send(f"El competidor {competidor} ha sido agregado al dataframe {titulo}.")
-
-
-@tree.command(name="suma-puntos-rdls", description="Suma puntos a un competidor", guild=Object(id=SERVER_ID))
-@app_commands.describe(titulo="El título del dataframe", competidor="El competidor al que se le sumarán los puntos", puntos="Los puntos a sumar")
-@app_commands.checks.has_permissions(administrator=True)
-async def sumar_puntos(interaction: Interaction, titulo: str, competidor: str, puntos: int):
-    print(f"[Pandas] {interaction.user}: {titulo}, {competidor}, {puntos}")
-    if not Path(f"{titulo}.csv").exists():
-        await interaction.user.send(f"El dataframe {titulo} no existe.")
+    embed: Embed = message.embeds[0]
+    options_number: int = len(embed.description.split("\n\n")[1].split("\n"))
+    if payload.emoji.name in list(EMOJI_MAP.values())[:options_number]:
         return
-    df = pd.read_csv(f"{titulo}.csv")
-    if competidor not in df["Competidor"].to_list():
-        await interaction.user.send(f"El competidor {competidor} no está en el dataframe {titulo}.")
-    df.loc[df["Competidor"] == competidor, "Puntos"] += puntos
-    df = df.sort_values(by="Puntos")
-    df.index += 1
-    df.to_csv(f"{titulo}.csv", index=False)
-    await interaction.user.send(f"Se le han sumado {puntos} puntos al competidor {competidor}.")
+    await message.remove_reaction(payload.emoji, payload.member)
+    await payload.member.send("Por favor, reacciona con un emoji válido.")
 
 
 def main():
