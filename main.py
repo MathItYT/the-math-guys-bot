@@ -2,7 +2,7 @@ from dotenv import load_dotenv
 import os
 from typing import Final
 from openai import OpenAI
-from discord import Message, Intents, Member, Game, Interaction, Client, Object, Embed, RawReactionActionEvent, app_commands
+from discord import Message, Intents, Member, Game, Interaction, Client, Object, Guild, Embed, RawReactionActionEvent, app_commands
 from discord import utils
 from the_math_guys_bot.handle_message import handle_message
 from datetime import datetime
@@ -124,7 +124,7 @@ async def crear_encuesta(interaction: Interaction, pregunta: str, opciones: str)
     embed.set_footer(text=f"Encuesta creada por {interaction.user}")
     message: Message = await interaction.followup.send(embed=embed, wait=True)
     for i in range(1, len(opciones) + 1):
-        await message.add_reaction(utils.get(Object(id=SERVER_ID).emojis, name=EMOJI_MAP[i][1:-1]))
+        await message.add_reaction(utils.get(interaction.guild.emojis, name=EMOJI_MAP[i][1:-1]))
     with open("polls_ids.txt", "a") as f:
         f.write(f"{message.id}\n")
 
