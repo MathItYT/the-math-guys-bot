@@ -139,12 +139,6 @@ async def on_raw_reaction_add(payload: RawReactionActionEvent):
     message: Message = await client.get_channel(payload.channel_id).fetch_message(message_id)
     if not message.embeds:
         return
-    embed: Embed = message.embeds[0]
-    options_number: int = len(embed.description.split("\n\n")[1].split("\n"))
-    if payload.emoji.name in list(EMOJI_MAP.values())[:options_number]:
-        return
-    await message.remove_reaction(payload.emoji, payload.member)
-    await payload.member.send("Por favor, reacciona con un emoji válido.")
 
     member_reactions: int = 0
     
@@ -156,6 +150,13 @@ async def on_raw_reaction_add(payload: RawReactionActionEvent):
         await message.remove_reaction(payload.emoji, payload.member)
         await payload.member.send("Solo puedes reaccionar una vez por encuesta.")
         return
+    
+    embed: Embed = message.embeds[0]
+    options_number: int = len(embed.description.split("\n\n")[1].split("\n"))
+    if payload.emoji.name in list(EMOJI_MAP.values())[:options_number]:
+        return
+    await message.remove_reaction(payload.emoji, payload.member)
+    await payload.member.send("Por favor, reacciona con un emoji válido.")
 
 
 def main():
