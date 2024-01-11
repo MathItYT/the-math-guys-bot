@@ -145,8 +145,7 @@ async def on_raw_reaction_add(payload: RawReactionActionEvent):
         return
     await message.remove_reaction(payload.emoji, payload.member)
     await payload.member.send("Por favor, reacciona con un emoji válido.")
-    
-    member_id: Member = payload.member.id
+
     member_reactions: int = 0
     
     for reaction in message.reactions:
