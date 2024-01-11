@@ -131,6 +131,8 @@ async def crear_encuesta(interaction: Interaction, pregunta: str, opciones: str)
 
 @client.event
 async def on_raw_reaction_add(payload: RawReactionActionEvent):
+    if payload.member.bot:
+        return
     message_id: int = payload.message_id
     if message_id not in [int(line) for line in open("polls_ids.txt", "r").readlines()]:
         return
@@ -139,10 +141,22 @@ async def on_raw_reaction_add(payload: RawReactionActionEvent):
         return
     embed: Embed = message.embeds[0]
     options_number: int = len(embed.description.split("\n\n")[1].split("\n"))
-    if payload.emoji.name not in list(EMOJI_MAP.values())[:options_number]:
+    if payload.emoji.name in list(EMOJI_MAP.values())[:options_number]:
         return
     await message.remove_reaction(payload.emoji, payload.member)
     await payload.member.send("Por favor, reacciona con un emoji válido.")
+    
+    member_id: Member = payload.member.id
+    member_reactions: int = 0
+    
+    for reaction in message.reactions:
+        async for user in reaction.users():
+            if user.id == payload.user_id:
+                member_reactions += 1
+    if member_reactions > 1:
+        await message.remove_reaction(payload.emoji, payload.member)
+        await payload.member.send("Solo puedes reaccionar una vez por encuesta.")
+        return
 
 
 def main():
