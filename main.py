@@ -3,10 +3,9 @@ import os
 from typing import Final
 from openai import OpenAI
 from discord import Message, Intents, Member, Game, Interaction, Client, Object, Embed, RawReactionActionEvent, app_commands
+from discord import utils
 from the_math_guys_bot.handle_message import handle_message
 from datetime import datetime
-from pathlib import Path
-import pandas as pd
 
 
 load_dotenv()
@@ -125,7 +124,7 @@ async def crear_encuesta(interaction: Interaction, pregunta: str, opciones: str)
     embed.set_footer(text=f"Encuesta creada por {interaction.user}")
     message: Message = await interaction.followup.send(embed=embed, wait=True)
     for i in range(1, len(opciones) + 1):
-        await message.add_reaction(EMOJI_MAP[i])
+        await message.add_reaction(utils.get(message.guild.emojis, name=EMOJI_MAP[i][1:-1]))
     with open("polls_ids.txt", "a") as f:
         f.write(f"{message.id}\n")
 
@@ -140,7 +139,7 @@ async def on_raw_reaction_add(payload: RawReactionActionEvent):
         return
     embed: Embed = message.embeds[0]
     options_number: int = len(embed.description.split("\n\n")[1].split("\n"))
-    if payload.emoji.name in list(EMOJI_MAP.values())[:options_number]:
+    if payload.emoji in [utils.get(message.guild.emojis, name=EMOJI_MAP[i][1:-1]).name for i in range(1, options_number + 1)]:
         return
     await message.remove_reaction(payload.emoji, payload.member)
     await payload.member.send("Por favor, reacciona con un emoji válido.")
