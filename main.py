@@ -16,15 +16,15 @@ SERVER_ID: Final[int] = 1045453708642758657
 MAX_GPT_QUESTIONS_PER_DAY: Final[int] = 5
 current_questions: int = 0
 EMOJI_MAP: Final[dict[int, str]] = {
-    1: ":one:",
-    2: ":two:",
-    3: ":three:",
-    4: ":four:",
-    5: ":five:",
-    6: ":six:",
-    7: ":seven:",
-    8: ":eight:",
-    9: ":nine:"
+    1: "1️⃣",
+    2: "2️⃣",
+    3: "3️⃣",
+    4: "4️⃣",
+    5: "5️⃣",
+    6: "6️⃣",
+    7: "7️⃣",
+    8: "8️⃣",
+    9: "9️⃣"
 }
 
 intents: Intents = Intents.all()
@@ -124,7 +124,7 @@ async def crear_encuesta(interaction: Interaction, pregunta: str, opciones: str)
     embed.set_footer(text=f"Encuesta creada por {interaction.user}")
     message: Message = await interaction.followup.send(embed=embed, wait=True)
     for i in range(1, len(opciones) + 1):
-        await message.add_reaction(utils.get(interaction.guild.emojis, name=EMOJI_MAP[i][1:-1]))
+        await message.add_reaction(EMOJI_MAP[i])
     with open("polls_ids.txt", "a") as f:
         f.write(f"{message.id}\n")
 
@@ -139,7 +139,7 @@ async def on_raw_reaction_add(payload: RawReactionActionEvent):
         return
     embed: Embed = message.embeds[0]
     options_number: int = len(embed.description.split("\n\n")[1].split("\n"))
-    if payload.emoji in [utils.get(message.guild.emojis, name=EMOJI_MAP[i][1:-1]).name for i in range(1, options_number + 1)]:
+    if payload.emoji.name not in list(EMOJI_MAP.values())[:options_number]:
         return
     await message.remove_reaction(payload.emoji, payload.member)
     await payload.member.send("Por favor, reacciona con un emoji válido.")
