@@ -2,10 +2,10 @@ from dotenv import load_dotenv
 import os
 from typing import Final
 from openai import OpenAI
-from discord import Message, Intents, Member, Game, Interaction, Client, Object, Guild, Embed, RawReactionActionEvent, app_commands
-from discord import utils
+from discord import Message, Intents, Member, Game, Interaction, Client, Object, Embed, RawReactionActionEvent, app_commands
 from the_math_guys_bot.handle_message import handle_message
 from datetime import datetime
+import json
 
 
 load_dotenv()
@@ -13,8 +13,6 @@ DISCORD_TOKEN: Final[str] = os.getenv("DISCORD_TOKEN")
 OPENAI_TOKEN: Final[str] = os.getenv("OPENAI_TOKEN")
 GENERAL_ID: Final[int] = 1045453709221568535
 SERVER_ID: Final[int] = 1045453708642758657
-MAX_GPT_QUESTIONS_PER_DAY: Final[int] = 5
-current_questions: int = 0
 EMOJI_MAP: Final[dict[int, str]] = {
     1: "1️⃣",
     2: "2️⃣",
@@ -26,19 +24,21 @@ EMOJI_MAP: Final[dict[int, str]] = {
     8: "8️⃣",
     9: "9️⃣"
 }
+SYSTEM_MESSAGE: Final[str] = f"""Eres un bot en español que tiene dos formas de comportarse.
+La primera es como un bot amistoso e informal, que bromea y responde a mensajes de forma casual.
+La segunda es como profesor, donde deberás responder preguntas académicas de forma clara y concisa."""
 
 intents: Intents = Intents.all()
 client: Client = Client(intents=intents)
 tree: app_commands.CommandTree = app_commands.CommandTree(client)
-current_day: int = datetime.now().day
 
 openai_client: OpenAI = OpenAI(api_key=OPENAI_TOKEN)
-messages: list[dict[str, str]] = [
-    {"role": "system", "content": "Eres un asistente que habla español y debe responder "
-     "preguntas sobre temas de matemáticas, física, computación, o cualquier otra ciencia. "
-     "Debes dejar una respuesta justificada, pero no siempre completa. "
-     "Debes dejar interrogantes para que el usuario cuestione por sí mismo."}
-]
+with open("messages.json", "w") as f:
+    json.dump(
+        [
+            {"role": "system", "content": SYSTEM_MESSAGE}
+        ], f
+    )
 
 
 @client.event
@@ -71,14 +71,8 @@ async def on_member_join(member: Member):
 @tree.command(name="gpt", description="Haz una pregunta a GPT-3", guild=Object(id=SERVER_ID))
 @app_commands.describe(question="La pregunta que quieres hacerle a GPT-3")
 async def gpt(interaction: Interaction, question: str):
-    global current_questions, current_day, messages
-    if current_day == datetime.now().day and current_questions >= MAX_GPT_QUESTIONS_PER_DAY:
-        await interaction.response.send_message(f"Ya se han hecho {MAX_GPT_QUESTIONS_PER_DAY} preguntas hoy. Por favor, intenta de nuevo mañana :)")
-        return
-    if current_day != datetime.now().day:
-        current_day = datetime.now().day
-        current_questions = 0
-        messages = messages[:1]
+    with open("messages.json", "r") as f:
+        messages: list[dict[str, str]] = json.load(f)
     if not question:
         await interaction.response.send_message("Por favor, haz una pregunta.")
         return
@@ -97,11 +91,11 @@ async def gpt(interaction: Interaction, question: str):
     print(f"[GPT-3] {interaction.user}: {answer}")
     await interaction.followup.send(f"""Pregunta: {question}
 
-Respuesta: {answer}
-
-Quedan {MAX_GPT_QUESTIONS_PER_DAY - current_questions - 1} preguntas hoy.""")
+Respuesta: {answer}""")
     current_questions += 1
     messages.append({"role": "assistant", "content": answer})
+    with open("messages.json", "w") as f:
+        json.dump(messages, f)
 
 
 @tree.command(name="crear-encuesta", description="Crea una encuesta", guild=Object(id=SERVER_ID))

@@ -1,31 +1,14 @@
 from discord import Message
 from openai import OpenAI
 from typing import Final
+import json
 
 
 MATHLIKE_USER_ID: Final[int] = 546393436668952663
+BOT_USER_ID: Final[int] = 1194231765175369788
 
 
-def is_spam(message_content: str, client: OpenAI) -> bool:
-    openai_response: str = client.chat.completions.create(
-        model="gpt-3.5-turbo-1106",
-        messages=[
-            {"role": "system", "content": "Debes determinar si el mensaje es spam o no con Yes o No."},
-            {"role": "user", "content": f"¿Es spam el siguiente mensaje?: {message_content}"}
-        ],
-        temperature=0,
-        max_tokens=1,
-        top_p=1,
-        frequency_penalty=0,
-        presence_penalty=0,
-    ).choices[0].message.content
-    print(f"[is_spam] {message_content}: {openai_response}")
-    return ("y" == openai_response.lower()[0]) or ("s" == openai_response.lower()[0])
-
-async def handle_message(message: Message, client: OpenAI):
-    if is_spam(message.content, client):
-        await message.channel.send(f"Este mensaje es posible spam. Ping a <@{MATHLIKE_USER_ID}> para que lo revise.")
-        return
+async def handle_message(message: Message, client: OpenAI) -> None:
     if "hola" in message.content.lower():
         await message.channel.send("¡Hola!")
         return  
@@ -44,3 +27,21 @@ async def handle_message(message: Message, client: OpenAI):
     if "buenas noches" in message.content.lower():
         await message.channel.send("¡Buenas noches!")
         return
+    if BOT_USER_ID in [user.id for user in message.mentions]:
+        with open("messages.json", "r") as f:
+            messages: list[dict[str, str]] = json.load(f)
+        messages.append({"role": "user", "content": message.content})
+        response: str = client.chat.completions.create(
+            messages=messages,
+            model="gpt-3.5-turbo-1106",
+            temperature=0,
+            max_tokens=1000,
+            top_p=1,
+            frequency_penalty=0,
+            presence_penalty=0,
+        ).choices[0].message.content
+        print(f"[GPT-3] {message.author}: {response}")
+        await message.channel.send(response)
+        messages.append({"role": "assistant", "content": response})
+        with open("messages.json", "w") as f:
+            json.dump(messages, f)
