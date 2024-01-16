@@ -13,7 +13,7 @@ python-dotenv = "^1.0.0"
 pandas = "^2.1.4"
 sympy = "^1.12"
 matplotlib = "^3.8.2"
-antlr4-python3-runtime = "4.10"
+antlr4-python3-runtime = "4.11"
 
 
 [build-system]
