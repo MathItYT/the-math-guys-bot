@@ -34,6 +34,6 @@ def plot_expression(
     except Exception as e:
         return e
     img = BytesIO()
-    p.save(img, format='png')
+    p.save(img)
     img.seek(0)
     return img
