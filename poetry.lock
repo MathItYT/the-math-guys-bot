@@ -123,13 +123,12 @@ files = [
 
 [[package]]
 name = "antlr4-python3-runtime"
-version = "4.13.1"
-description = "ANTLR 4.13.1 runtime for Python 3"
+version = "4.10"
+description = "ANTLR 4.10 runtime for Python 2.7.12"
 optional = false
 python-versions = "*"
 files = [
-    {file = "antlr4-python3-runtime-4.13.1.tar.gz", hash = "sha256:3cd282f5ea7cfb841537fe01f143350fdb1c0b1ce7981443a2fa8513fddb6d1a"},
-    {file = "antlr4_python3_runtime-4.13.1-py3-none-any.whl", hash = "sha256:78ec57aad12c97ac039ca27403ad61cb98aaec8a3f9bb8144f889aa0fa28b943"},
+    {file = "antlr4-python3-runtime-4.10.tar.gz", hash = "sha256:061a49bc72ae05a35d9b61c0ba0ac36c0397708819f02fbfb20a80e47d287a1b"},
 ]
 
 [[package]]
@@ -1447,4 +1446,4 @@ testing = ["big-O", "jaraco.functools", "jaraco.itertools", "more-itertools", "p
 [metadata]
 lock-version = "2.0"
 python-versions = ">=3.9,<4.0"
-content-hash = "bcf8d5ea0bb4728f652f4349f3aef0838f6bf1efc49d60721e1fb59dfaff2481"
+content-hash = "1bcca11ce6dbb6c8b8d810d7bea87e3cad14c583b11881f3f54c60839d5633a7"
