@@ -6,6 +6,7 @@ from discord import Message, Intents, Member, Game, Interaction, Client, Object,
 from the_math_guys_bot.handle_message import handle_message
 from the_math_guys_bot.plot import plot_expression
 import json
+import matplotlib.pyplot as plt
 
 
 load_dotenv()
@@ -170,6 +171,8 @@ async def graficar(interaction: Interaction, funcion: str, rango_x: str = "-10,1
 
 
 def main():
+    plt.rcParams['text.usetex'] = True
+    plt.rcParams['text.latex.preamble'] = r'\usepackage{amsmath}'
     client.run(DISCORD_TOKEN)
 
 

@@ -27,7 +27,7 @@ def plot_expression(
             show=False,
             legend=True,
             line_color=color,
-            title=f"Plot of $\\displaystyle {latex_str}$",
+            title=f"Gráfica de $\\displaystyle {latex_str}$",
             xlabel='x',
             ylabel=f'{f_label}({variable})'
         )
