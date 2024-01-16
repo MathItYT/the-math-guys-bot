@@ -11,6 +11,8 @@ discord-py = "^2.3.2"
 openai = "^1.7.0"
 python-dotenv = "^1.0.0"
 pandas = "^2.1.4"
+sympy = "^1.12"
+matplotlib = "^3.8.2"
 
 
 [build-system]

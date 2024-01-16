@@ -4,7 +4,7 @@ from typing import Final
 from openai import OpenAI
 from discord import Message, Intents, Member, Game, Interaction, Client, Object, Embed, RawReactionActionEvent, app_commands
 from the_math_guys_bot.handle_message import handle_message
-from datetime import datetime
+from the_math_guys_bot.plot import plot_expression
 import json
 
 
@@ -151,6 +151,22 @@ async def on_raw_reaction_add(payload: RawReactionActionEvent):
         return
     await message.remove_reaction(payload.emoji, payload.member)
     await payload.member.send("Por favor, reacciona con un emoji válido.")
+
+
+@tree.command(name="graficar", description="Grafica una función", guild=Object(id=SERVER_ID))
+@app_commands.describe(funcion="La función a graficar", rango_x="El rango de valores de x separados por comas (opcional)", rango_y="El rango de valores de y separados por comas (opcional)", color="El color de la función (opcional)", variable="La variable de la función (opcional)", etiqueta="La etiqueta de la función (opcional)")
+async def graficar(interaction: Interaction, funcion: str, rango_x: str = "-10,10", rango_y: str = "-10,10", color: str = "blue", variable: str = "x", etiqueta: str = "f"):
+    print(f"[Graficar] {interaction.user}: {funcion}")
+    if not funcion:
+        await interaction.response.send_message("Por favor, ingresa una función.")
+        return
+    await interaction.response.defer()
+    img = plot_expression(funcion, tuple(map(int, rango_x.split(","))), tuple(map(int, rango_y.split(","))), color, variable, etiqueta)
+    if isinstance(img, Exception):
+        await interaction.followup.send(f"Ocurrió un error al graficar la función: {img}")
+        return
+    await interaction.followup.send(file=img)
+    img.close()
 
 
 def main():
