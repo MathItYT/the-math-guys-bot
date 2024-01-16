@@ -2,7 +2,7 @@ from dotenv import load_dotenv
 import os
 from typing import Final
 from openai import OpenAI
-from discord import Message, Intents, Member, Game, Interaction, Client, Object, Embed, RawReactionActionEvent, app_commands
+from discord import Message, Intents, Member, Game, File, Interaction, Client, Object, Embed, RawReactionActionEvent, app_commands
 from the_math_guys_bot.handle_message import handle_message
 from the_math_guys_bot.plot import plot_expression
 import json
@@ -166,7 +166,7 @@ async def graficar(interaction: Interaction, funcion: str, rango_x: str = "-10,1
     if isinstance(img, Exception):
         await interaction.followup.send(f"Ocurrió un error al graficar la función: {img}")
         return
-    await interaction.followup.send(file=img)
+    await interaction.followup.send(file=File(img, "plot.png"))
     img.close()
 
 
