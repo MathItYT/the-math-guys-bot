@@ -162,7 +162,7 @@ async def graficar(interaction: Interaction, funciones: str, rango_x: str = "-10
         await interaction.response.send_message("Por favor, ingresa funciones separadas por ';' (sin espacios).")
         return
     await interaction.response.defer()
-    img = plot_expression(*funciones.split(";"), tuple(map(int, rango_x.split(","))), tuple(map(int, rango_y.split(","))), colors.split(";"))
+    img = plot_expression(*funciones.split(";"), x_range=tuple(map(int, rango_x.split(","))), y_range=tuple(map(int, rango_y.split(","))), colors=list(filter(lambda x: x, colors.split(";"))))
     if isinstance(img, Exception):
         await interaction.followup.send(f"Ocurrió un error al graficar la función: {img}")
         return
@@ -171,8 +171,6 @@ async def graficar(interaction: Interaction, funciones: str, rango_x: str = "-10
 
 
 def main():
-    plt.rcParams['text.usetex'] = True
-    plt.rcParams['text.latex.preamble'] = r'\usepackage{amsmath}'
     client.run(DISCORD_TOKEN)
 
 
