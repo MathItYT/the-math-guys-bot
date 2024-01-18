@@ -122,7 +122,7 @@ def plot_expression(
             ylim=y_range,
             line_color=colors[0],
             show=False,
-            legend=True
+            legend=False
         )
         for expr, color in zip(latex_strings[1:], colors[1:]):
             p.append(
@@ -132,7 +132,7 @@ def plot_expression(
                     ylim=y_range,
                     line_color=color,
                     show=False,
-                    legend=True
+                    legend=False
                 )[0]
             )
 
