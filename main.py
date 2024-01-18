@@ -155,7 +155,7 @@ async def on_raw_reaction_add(payload: RawReactionActionEvent):
 
 
 @tree.command(name="graficar", description="Grafica una función", guild=Object(id=SERVER_ID))
-@app_commands.describe(funciones="La función a graficar", rango_x="El rango de valores de x separados por comas (opcional)", rango_y="El rango de valores de y separados por comas (opcional)", colors="El color de la función (opcional)")
+@app_commands.describe(funciones="Las funciones a graficar separadas por ';' (sin espacios)", rango_x="El rango de valores de x separados por comas (opcional)", rango_y="El rango de valores de y separados por comas (opcional)", colors="Los colores de las funciones separados por ';' y sin espacios (opcional)")
 async def graficar(interaction: Interaction, funciones: str, rango_x: str = "-10,10", rango_y: str = "-10,10", colors: str = ""):
     print(f"[Graficar] {interaction.user}: {funciones}, {rango_x}, {rango_y}, {colors}")
     if not funciones:
