@@ -137,8 +137,7 @@ def plot_expression(
             )
 
     except Exception as e:
-        print(e)
-        return e
+        raise e
 
     img = BytesIO()
     p.save(img)
