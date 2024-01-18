@@ -100,11 +100,11 @@ def make_single_plot(
     raise ValueError("No se pudo graficar la función.")
 
 
-def plot_expression_2d(
+def plot_expression(
     *latex_strings: str,
     x_range: tuple = (-10, 10),
     y_range: tuple = (-10, 10),
-    colors: Optional[tuple] = None,
+    colors: Optional[list[str]] = None,
 ) -> BytesIO:
     """
     Plot an expression in the given range.
