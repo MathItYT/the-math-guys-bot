@@ -7,7 +7,7 @@ from the_math_guys_bot.handle_message import handle_message
 from the_math_guys_bot.plot import plot_expression
 import json
 import matplotlib.pyplot as plt
-from cycler import cycler
+from the_math_guys_bot.random_problem_set import random_problem_set
 
 
 load_dotenv()
@@ -169,6 +169,12 @@ async def graficar(interaction: Interaction, funciones: str, rango_x: str = "-10
         return
     await interaction.followup.send(file=File(img, "plot.png"))
     img.close()
+
+
+@tree.command(name="set-aleatorio", description="Envía un set de problemas aleatorio de AMC Trivial", guild=Object(id=SERVER_ID))
+async def set_aleatorio(interaction: Interaction):
+    await interaction.response.defer()
+    await interaction.followup.send(file=File(f"problems/set{random_problem_set()}.pdf"))
 
 
 def main():

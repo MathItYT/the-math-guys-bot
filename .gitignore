@@ -2,3 +2,4 @@
 __pycache__
 *.txt
 *.csv
+client_secret.json
