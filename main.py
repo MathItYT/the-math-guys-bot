@@ -176,6 +176,9 @@ def main():
     plt.rcParams["axes.facecolor"] = (0, 0, 0, 0)
     plt.rcParams["savefig.facecolor"] = (0, 0, 0, 0)
     plt.rcParams["axes.edgecolor"] = (1, 1, 1, 1)
+    plt.rcParams["axes.labelcolor"] = (1, 1, 1, 1)
+    plt.rcParams["figure.figsize"] = (2000/300, 2000/300)
+    plt.rcParams["figure.dpi"] = 300
     client.run(DISCORD_TOKEN)
 
 
