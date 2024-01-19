@@ -6,7 +6,6 @@ from discord import Message, Intents, Member, Game, File, Interaction, Client, O
 from the_math_guys_bot.handle_message import handle_message
 from the_math_guys_bot.plot import plot_expression
 import json
-import matplotlib.pyplot as plt
 
 
 load_dotenv()

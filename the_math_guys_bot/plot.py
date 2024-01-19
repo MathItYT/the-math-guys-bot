@@ -6,7 +6,7 @@ from sympy.plotting import (
     plot3d_parametric_line,
     plot3d_parametric_surface
 )
-from sympy.plotting.plot import Plot
+from sympy.plotting.plot import Plot, MatplotlibBackend
 from sympy import Expr
 from sympy.parsing.latex import parse_latex
 from typing import Optional
@@ -50,7 +50,9 @@ def make_single_plot(
             ylim=ylim,
             line_color=line_color,
             show=show,
-            legend=legend
+            legend=legend,
+            xlabel="",
+            ylabel=""
         )
     if list(map(str, expr.free_symbols)) == ["x", "y"] and expr.is_Equality:
         return plot_implicit(
@@ -59,7 +61,9 @@ def make_single_plot(
             ylim=ylim,
             line_color=line_color,
             show=show,
-            legend=legend
+            legend=legend,
+            xlabel="",
+            ylabel=""
         )
     if list(map(str, expr.free_symbols)) == ["u"] and expr.is_Vector and len(expr.components) == 2:
         return plot_parametric(
@@ -68,7 +72,9 @@ def make_single_plot(
             ylim=ylim,
             line_color=line_color,
             show=show,
-            legend=legend
+            legend=legend,
+            xlabel="",
+            ylabel=""
         )
     if list(map(str, expr.free_symbols)) == ["x", "y"]:
         return plot3d(
@@ -77,7 +83,10 @@ def make_single_plot(
             ylim=ylim,
             line_color=line_color,
             show=show,
-            legend=legend
+            legend=legend,
+            xlabel="",
+            ylabel="",
+            zlabel=""
         )
     if list(map(str, expr.free_symbols)) == ["u"] and expr.is_Vector and len(expr.components) == 3:
         return plot3d_parametric_line(
@@ -86,7 +95,10 @@ def make_single_plot(
             ylim=ylim,
             line_color=line_color,
             show=show,
-            legend=legend
+            legend=legend,
+            xlabel="",
+            ylabel="",
+            zlabel=""
         )
     if list(map(str, expr.free_symbols)) == ["u", "v"] and expr.is_Vector and len(expr.components) == 3:
         return plot3d_parametric_surface(
@@ -95,7 +107,10 @@ def make_single_plot(
             ylim=ylim,
             line_color=line_color,
             show=show,
-            legend=legend
+            legend=legend,
+            xlabel="",
+            ylabel="",
+            zlabel=""
         )
     raise ValueError("No se pudo graficar la función.")
 
@@ -140,6 +155,11 @@ def plot_expression(
         raise e
 
     img = BytesIO()
-    p.save(img)
+    backend: MatplotlibBackend = p.backend(p)
+    backend.fig.patch.set_alpha(0)
+    backend.ax[0].patch.set_alpha(0)
+    for spine in backend.ax[0].spines.values():
+        spine.set_edgecolor('#ffffff')
+    backend.fig.savefig(img, transparent=True)
     img.seek(0)
     return img
