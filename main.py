@@ -6,6 +6,8 @@ from discord import Message, Intents, Member, Game, File, Interaction, Client, O
 from the_math_guys_bot.handle_message import handle_message
 from the_math_guys_bot.plot import plot_expression
 import json
+import matplotlib.pyplot as plt
+from cycler import cycler
 
 
 load_dotenv()
@@ -170,6 +172,10 @@ async def graficar(interaction: Interaction, funciones: str, rango_x: str = "-10
 
 
 def main():
+    plt.rcParams["figure.facecolor"] = (0, 0, 0, 0)
+    plt.rcParams["axes.facecolor"] = (0, 0, 0, 0)
+    plt.rcParams["savefig.facecolor"] = (0, 0, 0, 0)
+    plt.rcParams["axes.edgecolor"] = (1, 1, 1, 1)
     client.run(DISCORD_TOKEN)
 
 

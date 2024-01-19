@@ -6,7 +6,7 @@ from sympy.plotting import (
     plot3d_parametric_line,
     plot3d_parametric_surface
 )
-from sympy.plotting.plot import Plot, MatplotlibBackend
+from sympy.plotting.plot import Plot
 from sympy import Expr
 from sympy.parsing.latex import parse_latex
 from typing import Optional
@@ -152,14 +152,9 @@ def plot_expression(
             )
 
     except Exception as e:
-        raise e
+        return e
 
     img = BytesIO()
-    backend: MatplotlibBackend = p.backend(p)
-    backend.fig.patch.set_alpha(0)
-    backend.ax[0].patch.set_alpha(0)
-    for spine in backend.ax[0].spines.values():
-        spine.set_edgecolor('#ffffff')
-    backend.fig.savefig(img, transparent=True)
+    p.save(img)
     img.seek(0)
     return img
