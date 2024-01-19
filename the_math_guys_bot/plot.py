@@ -43,6 +43,17 @@ def make_single_plot(
     :return: The path to the image of the plot.
     """
     expr = simplify_expr(expr)
+    if expr.is_Number:
+        return plot(
+            expr,
+            xlim=xlim,
+            ylim=ylim,
+            line_color=line_color,
+            show=show,
+            legend=legend,
+            xlabel="",
+            ylabel=""
+        )
     if list(map(str, expr.free_symbols)) == ["x"]:
         return plot(
             expr,
