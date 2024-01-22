@@ -1,4 +1,4 @@
-from discord import Message, Attachment
+from discord import Message
 from typing import Final
 from vertexai.preview.generative_models import GenerativeModel, Image
 

@@ -1,7 +1,6 @@
 from dotenv import load_dotenv
 import os
 from typing import Final
-from openai import OpenAI
 from discord import Message, Intents, Member, Game, File, Interaction, Client, Object, Embed, RawReactionActionEvent, app_commands
 from the_math_guys_bot.handle_message import handle_message
 from the_math_guys_bot.plot import plot_expression
@@ -34,14 +33,6 @@ intents: Intents = Intents.all()
 client: Client = Client(intents=intents)
 tree: app_commands.CommandTree = app_commands.CommandTree(client)
 
-openai_client: OpenAI = OpenAI(api_key=OPENAI_TOKEN)
-with open("messages.json", "w") as f:
-    json.dump(
-        [
-            {"role": "system", "content": SYSTEM_MESSAGE}
-        ], f
-    )
-
 
 @client.event
 async def on_ready():
@@ -60,7 +51,7 @@ async def on_message(message: Message):
     channel: str = str(message.channel)
 
     print(f'[{channel}] {username}: "{user_message}"')
-    await handle_message(message, openai_client)
+    await handle_message(message)
 
 
 @client.event
@@ -68,36 +59,6 @@ async def on_member_join(member: Member):
     print(f"{member} has joined the server.")
     general = client.get_channel(GENERAL_ID)
     await general.send(f"¡Bienvenido {member}! Acá hay muchos aficionados a las matemáticas, computación, física, etc. ¡Esperamos que te sientas como en casa! :)")
-
-
-@tree.command(name="gpt", description="Haz una pregunta a GPT-3", guild=Object(id=SERVER_ID))
-@app_commands.describe(question="La pregunta que quieres hacerle a GPT-3")
-async def gpt(interaction: Interaction, question: str):
-    with open("messages.json", "r") as f:
-        messages: list[dict[str, str]] = json.load(f)
-    if not question:
-        await interaction.response.send_message("Por favor, haz una pregunta.")
-        return
-    print(f"[GPT-3] {interaction.user}: {question}")
-    await interaction.response.defer()
-    messages.append({"role": "user", "content": question})
-    answer: str = openai_client.chat.completions.create(
-        messages=messages,
-        model="gpt-3.5-turbo-1106",
-        temperature=0,
-        max_tokens=1000,
-        top_p=1,
-        frequency_penalty=0,
-        presence_penalty=0,
-    ).choices[0].message.content
-    print(f"[GPT-3] {interaction.user}: {answer}")
-    await interaction.followup.send(f"""Pregunta: {question}
-
-Respuesta: {answer}""")
-    current_questions += 1
-    messages.append({"role": "assistant", "content": answer})
-    with open("messages.json", "w") as f:
-        json.dump(messages, f)
 
 
 @tree.command(name="crear-encuesta", description="Crea una encuesta", guild=Object(id=SERVER_ID))
