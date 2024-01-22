@@ -154,6 +154,8 @@ async def ranking(interaction: Interaction):
     leaderboard = get_leaderboard()
     embed = Embed(title="Ranking de puntos")
     for i, (username, points) in enumerate(leaderboard, start=1):
+        if i == 11:
+            break
         embed.add_field(name=f"{i}. {username}", value=f"{points} puntos", inline=False)
     await interaction.followup.send(embed=embed)
 
