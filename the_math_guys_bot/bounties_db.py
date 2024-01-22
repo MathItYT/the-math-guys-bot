@@ -1,5 +1,5 @@
 from dotenv import load_dotenv
-from discord import Client
+from discord import Guild
 
 # Load environment variables from the .env file
 load_dotenv()
@@ -7,8 +7,7 @@ import os
 import MySQLdb
 
 
-def setup_users(client: Client):
-    the_math_guys = client.get_guild(1045453708642758657)
+def setup_users(guild: Guild):
     connection = MySQLdb.connect(
         host=os.getenv("DATABASE_HOST"),
         user=os.getenv("DATABASE_USERNAME"),
@@ -33,7 +32,7 @@ def setup_users(client: Client):
         )
 
         # Adds all users to the database
-        for member in the_math_guys.members:
+        for member in guild.members:
             cursor.execute(f"INSERT IGNORE INTO bounties (username, points) VALUES ('{member}', 10)")
         
         # Commit the changes

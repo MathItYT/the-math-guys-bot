@@ -34,7 +34,6 @@ tree: app_commands.CommandTree = app_commands.CommandTree(client)
 
 @client.event
 async def on_ready():
-    setup_users(client)
     await tree.sync(guild=Object(id=SERVER_ID))
     await client.change_presence(activity=Game(name="matemáticas"))
     print(f"Logged in as {client.user}!")
@@ -58,7 +57,7 @@ async def on_member_join(member: Member):
     print(f"{member} has joined the server.")
     general = client.get_channel(GENERAL_ID)
     await general.send(f"¡Bienvenido {member}! Acá hay muchos aficionados a las matemáticas, computación, física, etc. ¡Esperamos que te sientas como en casa! :)")
-    setup_users(client)
+    setup_users(member.guild)
 
 
 @tree.command(name="crear-encuesta", description="Crea una encuesta", guild=Object(id=SERVER_ID))
