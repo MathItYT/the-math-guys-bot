@@ -27,7 +27,7 @@ def setup_users(client: Client):
         # Create database if it doesn't exist
         cursor.execute("""CREATE TABLE IF NOT EXISTS bounties(
         username VARCHAR(255) NOT NULL,
-        points INT UNSIGNED NOT NULL
+        points INT UNSIGNED NOT NULL,
         PRIMARY KEY (username)
     )"""
         )
