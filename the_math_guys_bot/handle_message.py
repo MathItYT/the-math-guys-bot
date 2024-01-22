@@ -1,6 +1,7 @@
 from discord import Message
 from typing import Final, Any
 import google.generativeai as genai
+import google.ai.generativelanguage as glm
 import os
 from PIL import Image
 from io import BytesIO
@@ -11,34 +12,34 @@ BOT_USER_ID: Final[int] = 1194231765175369788
 GOOGLE_API_KEY: Final[str] = os.getenv("GOOGLE_API_KEY")
 genai.configure(api_key=GOOGLE_API_KEY)
 model = genai.GenerativeModel("gemini-pro-vision")
-messages: list[dict[str, Any]] = []
 
 
 async def get_images(message: Message) -> list[Image.Image]:
     images: list[Image.Image] = []
-    if len(message.attachments) > 0:
-        for attachment in message.attachments:
-            if attachment.height is not None:
-                images.append(Image.open(BytesIO(await attachment.read())))
+    for attachment in message.attachments:
+        if attachment.content_type.startswith("image"):
+            images.append(Image.open(BytesIO(await attachment.read())))
     return images
 
 
-def free_memory() -> None:
-    global messages
-    if len(messages) >= 100:
-        del messages[0]
-
-
 def generate_response(message: str, images: list[Image.Image]) -> str:
-    global messages
-    messages.append({"role": "user", "parts": [message, *images]})
-    response = model.generate_content(messages)
+    response = model.generate_content(
+        glm.Content(
+            parts=[
+                glm.Part(text=message),
+                glm.Part(
+                    inline_data=glm.Blob(
+                        mime_type="image/png",
+                        data=images[0].tobytes()
+                    )
+                )
+            ]
+        )
+    )
     try:
         response.text
     except AttributeError:
         return "Ha ocurrido un error al generar la respuesta."
-    messages.append({"role": "model", "parts": [response.text]})
-    free_memory()
     return response.text
 
 
