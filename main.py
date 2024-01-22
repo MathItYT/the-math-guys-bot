@@ -34,6 +34,7 @@ tree: app_commands.CommandTree = app_commands.CommandTree(client)
 
 @client.event
 async def on_ready():
+    setup_users(client)
     await tree.sync(guild=Object(id=SERVER_ID))
     await client.change_presence(activity=Game(name="matemáticas"))
     print(f"Logged in as {client.user}!")
@@ -215,7 +216,6 @@ def main():
     plt.rcParams['ytick.color'] = (1, 1, 1, 1)
     plt.rcParams["figure.figsize"] = (2000/300, 2000/300)
     plt.rcParams["figure.dpi"] = 300
-    setup_users(client)
     client.run(DISCORD_TOKEN)
 
 
