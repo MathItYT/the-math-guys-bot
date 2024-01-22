@@ -4,7 +4,7 @@ from typing import Final
 from discord import Message, Intents, Member, Game, File, Interaction, Client, Object, Embed, RawReactionActionEvent, app_commands
 from the_math_guys_bot.handle_message import handle_message
 from the_math_guys_bot.plot import plot_expression
-import json
+from the_math_guys_bot.bounties_db import setup_users, add_points, subtract_points, get_points, get_leaderboard, get_rank, exchange_points
 import matplotlib.pyplot as plt
 from the_math_guys_bot.random_problem_set import random_problem_set
 
@@ -25,9 +25,7 @@ EMOJI_MAP: Final[dict[int, str]] = {
     8: "8️⃣",
     9: "9️⃣"
 }
-SYSTEM_MESSAGE: Final[str] = f"""Eres un bot en español que tiene dos formas de comportarse.
-La primera es como un bot amistoso e informal, que bromea y responde a mensajes de forma casual.
-La segunda es como profesor, donde deberás responder preguntas académicas de forma clara y concisa."""
+MATHLIKE_ID: Final[int] = 546393436668952663
 
 intents: Intents = Intents.all()
 client: Client = Client(intents=intents)
@@ -59,6 +57,7 @@ async def on_member_join(member: Member):
     print(f"{member} has joined the server.")
     general = client.get_channel(GENERAL_ID)
     await general.send(f"¡Bienvenido {member}! Acá hay muchos aficionados a las matemáticas, computación, física, etc. ¡Esperamos que te sientas como en casa! :)")
+    setup_users(client)
 
 
 @tree.command(name="crear-encuesta", description="Crea una encuesta", guild=Object(id=SERVER_ID))
@@ -116,6 +115,70 @@ async def on_raw_reaction_add(payload: RawReactionActionEvent):
     await payload.member.send("Por favor, reacciona con un emoji válido.")
 
 
+@tree.command(name="sumar-puntos", description="Suma puntos a un usuario", guild=Object(id=SERVER_ID))
+async def sumar_puntos(interaction: Interaction, username: str, points_to_add: int):
+    print(f"[Sumar puntos] {interaction.user}: {username}, {points_to_add}")
+    if interaction.user.id != MATHLIKE_ID:
+        await interaction.response.send_message("Solo MathLike puede usar este comando.")
+        return
+    await interaction.response.defer()
+    add_points(username, points_to_add)
+    points = get_points(username)
+    await interaction.followup.send(f"Se le han sumado {points_to_add} puntos a {username}. Ahora tiene {points} puntos.")
+
+
+@tree.command(name="restar-puntos", description="Resta puntos a un usuario", guild=Object(id=SERVER_ID))
+async def restar_puntos(interaction: Interaction, username: str, points_to_subtract: int):
+    print(f"[Restar puntos] {interaction.user}: {username}, {points_to_subtract}")
+    if interaction.user.id != MATHLIKE_ID:
+        await interaction.response.send_message("Solo MathLike puede usar este comando.")
+        return
+    await interaction.response.defer()
+    subtract_points(username, points_to_subtract)
+    points = get_points(username)
+    await interaction.followup.send(f"Se le han restado {points_to_subtract} puntos a {username}. Ahora tiene {points} puntos.")
+
+
+@tree.command(name="puntos", description="Muestra los puntos de un usuario", guild=Object(id=SERVER_ID))
+async def puntos(interaction: Interaction, username: str):
+    print(f"[Puntos] {interaction.user}: {username}")
+    await interaction.response.defer()
+    points = get_points(username)
+    await interaction.followup.send(f"{username} tiene {points} puntos.")
+
+
+@tree.command(name="ranking", description="Muestra el ranking de puntos", guild=Object(id=SERVER_ID))
+async def ranking(interaction: Interaction):
+    print(f"[Ranking] {interaction.user}")
+    await interaction.response.defer()
+    leaderboard = get_leaderboard()
+    embed = Embed(title="Ranking de puntos")
+    for i, (username, points) in enumerate(leaderboard, start=1):
+        embed.add_field(name=f"{i}. {username}", value=f"{points} puntos", inline=False)
+    await interaction.followup.send(embed=embed)
+
+
+@tree.command(name="rango", description="Muestra el rango de un usuario", guild=Object(id=SERVER_ID))
+async def rango(interaction: Interaction, username: str):
+    print(f"[Rango] {interaction.user}: {username}")
+    await interaction.response.defer()
+    rank = get_rank(username)
+    await interaction.followup.send(f"{username} está en el puesto {rank}.")
+
+
+@tree.command(name="intercambiar-puntos", description="Intercambia puntos entre dos usuarios", guild=Object(id=SERVER_ID))
+async def intercambiar_puntos(interaction: Interaction, username1: str, username2: str, points: int):
+    print(f"[Intercambiar puntos] {interaction.user}: {username1}, {username2}, {points}")
+    if interaction.user.id != MATHLIKE_ID:
+        await interaction.response.send_message("Solo MathLike puede usar este comando.")
+        return
+    await interaction.response.defer()
+    exchange_points(username1, username2, points)
+    points1 = get_points(username1)
+    points2 = get_points(username2)
+    await interaction.followup.send(f"Se han intercambiado {points} puntos entre {username1} y {username2}. Ahora {username1} tiene {points1} puntos y {username2} tiene {points2} puntos.")
+
+
 @tree.command(name="graficar", description="Grafica una función", guild=Object(id=SERVER_ID))
 @app_commands.describe(funciones="Las funciones a graficar separadas por ';' (sin espacios y sintaxis LaTeX)", rango_x="El rango de valores de x separados por comas (opcional)", rango_y="El rango de valores de y separados por comas (opcional)", colors="Los colores de las funciones separados por ';' y sin espacios (opcional)")
 async def graficar(interaction: Interaction, funciones: str, rango_x: str = "-10,10", rango_y: str = "-10,10", colors: str = ""):
@@ -134,6 +197,9 @@ async def graficar(interaction: Interaction, funciones: str, rango_x: str = "-10
 
 @tree.command(name="set-aleatorio", description="Envía un set de problemas aleatorio de AMC Trivial", guild=Object(id=SERVER_ID))
 async def set_aleatorio(interaction: Interaction):
+    if interaction.user.id != MATHLIKE_ID:
+        await interaction.response.send_message("Solo MathLike puede usar este comando.")
+        return
     await interaction.response.defer()
     await interaction.followup.send(file=File(f"problems/set{random_problem_set()}.pdf"))
 
