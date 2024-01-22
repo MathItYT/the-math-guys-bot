@@ -1,27 +1,30 @@
-from discord import Message
-from openai import OpenAI
+from discord import Message, Attachment
 from typing import Final
-import json
+from vertexai.preview.generative_models import GenerativeModel, Image
 
 
 MATHLIKE_USER_ID: Final[int] = 546393436668952663
 BOT_USER_ID: Final[int] = 1194231765175369788
+model = GenerativeModel("gemini-pro-vision")
+chat = model.start_chat()
 
 
-async def handle_message(message: Message, client: OpenAI) -> None:
+async def get_images(message: Message) -> list[Image]:
+    images: list[Image] = []
+    if len(message.attachments) > 0:
+        for attachment in message.attachments:
+            if attachment.height is not None:
+                images.append(Image.from_bytes(await attachment.read()))
+    return images
+
+
+def generate_response(message: str, images: list[Image]) -> str:
+    response = chat.send_message(images + [message])
+    return response.text
+
+
+async def handle_message(message: Message) -> None:
     if BOT_USER_ID in [user.id for user in message.mentions]:
-        with open("messages.json", "r") as f:
-            messages: list[dict[str, str]] = json.load(f)
-        messages.append({"role": "user", "content": message.content})
-        response: str = client.chat.completions.create(
-            messages=messages,
-            model="gpt-3.5-turbo-1106",
-            temperature=0,
-            max_tokens=1000,
-            top_p=1,
-            frequency_penalty=0,
-            presence_penalty=0,
-        ).choices[0].message.content
-        print(f"[GPT-3] {message.author}: {response}")
+        images = await get_images(message)
+        response: str = generate_response(message.content.replace(f"<@{BOT_USER_ID}>", ""), images)
         await message.channel.send(response)
-        messages.append({"role": "assistant", "content": response})
