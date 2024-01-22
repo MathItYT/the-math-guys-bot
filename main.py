@@ -215,6 +215,7 @@ def main():
     plt.rcParams['ytick.color'] = (1, 1, 1, 1)
     plt.rcParams["figure.figsize"] = (2000/300, 2000/300)
     plt.rcParams["figure.dpi"] = 300
+    setup_users(client)
     client.run(DISCORD_TOKEN)
 
 
