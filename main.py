@@ -71,6 +71,7 @@ async def talk(ctx: discord.ApplicationContext):
         await ctx.followup.send("No estás en un canal de voz.")
         return
     
+    await ctx.followup.send("Escuchando...")
     vc = await voice.channel.connect()
     connections[ctx.guild.id] = vc
     vc.start_recording(
@@ -89,6 +90,7 @@ async def stop(ctx: discord.ApplicationContext):
     if not vc:
         await ctx.followup.send("No estás en una conversación o no estás corriendo el comando en el mismo canal.")
         return
+    await ctx.followup.send("Deteniendo y procesando...")
     vc.stop_recording()
     del connections[ctx.guild.id]
 
