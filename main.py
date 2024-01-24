@@ -31,6 +31,7 @@ EMOJI_MAP: Final[dict[int, str]] = {
 MATHLIKE_ID: Final[int] = 546393436668952663
 
 bot: discord.Bot = discord.Bot(description="Soy propiedad de The Math Guys :)")
+connections = {}
 
 
 @bot.event
@@ -71,12 +72,25 @@ async def talk(ctx: discord.ApplicationContext):
         return
     
     vc = await voice.channel.connect()
+    connections[ctx.guild.id] = vc
     vc.start_recording(
         discord.sinks.WaveSink(),
         once_done,
         ctx.author,
         vc
     )
+
+
+@bot.command(name="stop", description="Detiene la conversación")
+async def stop(ctx: discord.ApplicationContext):
+    print(f"[Stop] {ctx.user}")
+    await ctx.response.defer()
+    vc = connections.get(ctx.guild.id)
+    if not vc:
+        await ctx.followup.send("No estás en una conversación o no estás corriendo el comando en el mismo canal.")
+        return
+    vc.stop_recording()
+    del connections[ctx.guild.id]
 
 
 async def once_done(sink: discord.sinks.WaveSink, user: discord.User, vc: discord.VoiceClient):
