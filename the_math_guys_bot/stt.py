@@ -10,4 +10,6 @@ def speech_to_text(audio: BytesIO):
         language_code="es-ES",
     )
     response = client.recognize(config=config, audio=audio)
+    for result in response.results:
+        print("Transcript: {}".format(result.alternatives[0].transcript))
     return response.results[0].alternatives[0].transcript

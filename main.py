@@ -75,7 +75,7 @@ async def talk(ctx: discord.ApplicationContext):
     vc = await voice.channel.connect()
     connections[ctx.guild.id] = vc
     vc.start_recording(
-        discord.sinks.WaveSink(),
+        discord.sinks.MP3Sink(),
         once_done,
         ctx.author,
         vc
@@ -96,12 +96,11 @@ async def stop(ctx: discord.ApplicationContext):
 
 
 async def once_done(sink: discord.sinks.WaveSink, user: discord.User, vc: discord.VoiceClient):
-    recorded_user = [
+    audio = [
         audio
         for user_id, audio in sink.audio_data.items()
         if user_id == user.id
     ][0]
-    audio = recorded_user
     transcript = speech_to_text(audio.file)
     print(f"[Talk] {user}: {transcript}")
     response: str = generate_response(transcript, None)
