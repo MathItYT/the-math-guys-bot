@@ -101,8 +101,8 @@ async def once_done(sink: discord.sinks.WaveSink, user: discord.User, vc: discor
         for user_id, audio in sink.audio_data.items()
         if user_id == user.id
     ][0]
-    transcript = speech_to_text(audio.file)
     user.send(file=discord.File(audio.file, "audio.mp3"))
+    transcript = speech_to_text(audio.file)
     print(f"[Talk] {user}: {transcript}")
     response: str = generate_response(transcript, None)
     print(f"[Talk] TheMathGuysBot: {response}")
