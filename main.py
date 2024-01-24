@@ -75,7 +75,7 @@ async def talk(ctx: discord.ApplicationContext):
     vc = await voice.channel.connect()
     connections[ctx.guild.id] = vc
     vc.start_recording(
-        discord.sinks.MP3Sink(),
+        discord.sinks.WaveSink(),
         once_done,
         ctx.author,
         vc
