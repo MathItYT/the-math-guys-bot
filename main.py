@@ -105,8 +105,8 @@ async def once_done(sink: discord.sinks.WaveSink, user: discord.User, vc: discor
     print(f"[Talk] {user}: {transcript}")
     response: str = generate_response(transcript, None)
     print(f"[Talk] TheMathGuysBot: {response}")
-    bytes_io = text_to_speech(response)
-    vc.play(discord.FFmpegPCMAudio(bytes_io.read()))
+    filename = text_to_speech(response)
+    vc.play(discord.FFmpegPCMAudio(filename))
     while vc.is_playing():
         time.sleep(0)
     await vc.disconnect()
