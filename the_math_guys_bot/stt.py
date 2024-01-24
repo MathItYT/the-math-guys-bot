@@ -13,7 +13,8 @@ def speech_to_text(audio: BytesIO):
     audio = speech.RecognitionAudio(uri=uri)
     config = speech.RecognitionConfig(
         encoding=speech.RecognitionConfig.AudioEncoding.LINEAR16,
-        language_code="es"
+        language_code="es",
+        audio_channel_count=2,
     )
     response = client.recognize(config=config, audio=audio)
     return response.results[0].alternatives[0].transcript
