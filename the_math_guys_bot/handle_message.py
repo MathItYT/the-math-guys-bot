@@ -46,7 +46,7 @@ def generate_response(message: str, image: Optional[bytes]) -> str:
             )
         )
     try:
-        response.parts[0].text
+        response.text
     except AttributeError:
         return "Ha ocurrido un error al generar la respuesta."
     return response.text
