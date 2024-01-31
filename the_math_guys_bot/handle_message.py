@@ -47,7 +47,7 @@ def generate_response(message: str, image: Optional[bytes]) -> str:
         )
     try:
         response.parts[0].text
-    except ValueError:
+    except IndexError:
         return "Ha ocurrido un error al generar la respuesta."
     return response.parts[0].text
 
