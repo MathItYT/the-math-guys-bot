@@ -103,7 +103,7 @@ async def once_done(sink: discord.sinks.WaveSink, user: discord.User, vc: discor
     ][0]
     transcript = speech_to_text(audio.file)
     print(f"[Talk] {user}: {transcript}")
-    response: str = generate_response(transcript, None)
+    response: str = generate_response(transcript, None).replace("*", "").replace("$", "")
     print(f"[Talk] TheMathGuysBot: {response}")
     filename = text_to_speech(response)
     vc.play(discord.FFmpegPCMAudio(filename))
