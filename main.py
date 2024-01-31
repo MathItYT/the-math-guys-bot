@@ -30,7 +30,7 @@ EMOJI_MAP: Final[dict[int, str]] = {
 }
 MATHLIKE_ID: Final[int] = 546393436668952663
 
-bot: discord.Bot = discord.Bot(description="Soy propiedad de The Math Guys :)")
+bot: discord.Bot = discord.Bot(description="Soy propiedad de The Math Guys :)", intents=discord.Intents.all())
 connections = {}
 
 
