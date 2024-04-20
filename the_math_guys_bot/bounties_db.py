@@ -1,5 +1,6 @@
 from dotenv import load_dotenv
 from discord import Guild
+import pymysql.cursors
 
 # Load environment variables from the .env file
 load_dotenv()
@@ -37,16 +38,16 @@ def setup_users(guild: Guild):
             # Create a cursor to interact with the database
             with connection.connect() as conn:
                 # Create database if it doesn't exist
-                conn.execute("""CREATE TABLE IF NOT EXISTS bounties(
+                conn.execute(sqlalchemy.text("""CREATE TABLE IF NOT EXISTS bounties(
                 username VARCHAR(255) NOT NULL,
                 points INT UNSIGNED NOT NULL,
                 PRIMARY KEY (username)
-            )"""
+            )""")
                 )
 
                 # Adds all users to the database
                 for member in guild.members:
-                    conn.execute(f"INSERT IGNORE INTO bounties (username, points) VALUES ('{member}', 10)")
+                    conn.execute(sqlalchemy.text(f"INSERT IGNORE INTO bounties (username, points) VALUES ('{member}', 10)"))
 
         except pymysql.Error as e:
             print("MySQL Error:", e)
@@ -129,7 +130,7 @@ def add_points(username: str, points_to_add: int):
                 points = get_points(username)
 
                 # Set the points of the user
-                conn.execute(f"UPDATE bounties SET points = {points + points_to_add} WHERE username = '{username}'")
+                conn.execute(sqlalchemy.text(f"UPDATE bounties SET points = {points + points_to_add} WHERE username = '{username}'"))
 
         except pymysql.Error as e:
             print("MySQL Error:", e)
@@ -174,9 +175,9 @@ def get_points(username: str) -> int:
             # Create a cursor to interact with the database
             with connection.connect() as conn:
                 # Get the points of the user
-                points = conn.execute(f"SELECT points FROM bounties WHERE username = '{username}'").fetchone()[0]
-
-                return points
+                points: sqlalchemy.CursorResult = conn.execute(sqlalchemy.text(f"SELECT points FROM bounties WHERE username = '{username}'"))
+                points = points.fetchone()[0]
+                return points.scalar()
 
         except pymysql.Error as e:
             print("MySQL Error:", e)
@@ -221,8 +222,10 @@ def get_leaderboard() -> list[tuple[str, int]]:
             # Create a cursor to interact with the database
             with connection.connect() as conn:
                 # Get the points of the user
-                leaderboard = conn.execute(f"SELECT username, points FROM bounties ORDER BY points DESC").fetchall()
-
+                leaderboard = conn.execute(sqlalchemy.text(f"SELECT username, points FROM bounties ORDER BY points DESC"))
+                leaderboard = leaderboard.fetchall()
+                leaderboard = [(row[0], row[1]) for row in leaderboard]
+                leaderboard = [(row[0].scalar(), row[1].scalar()) for row in leaderboard]
                 return leaderboard
 
         except pymysql.Error as e:
@@ -268,8 +271,7 @@ def get_rank(username: str) -> int:
             # Create a cursor to interact with the database
             with connection.connect() as conn:
                 # Get the points of the user
-                rank = conn.execute(f"SELECT COUNT(*) FROM bounties WHERE points > (SELECT points FROM bounties WHERE username = '{username}')").fetchone()[0] + 1
-
+                rank = conn.execute(sqlalchemy.text(f"SELECT COUNT(*) FROM bounties WHERE points > (SELECT points FROM bounties WHERE username = '{username}')")).fetchone()[0].scalar() + 1
                 return rank
 
         except pymysql.Error as e:
@@ -290,7 +292,7 @@ def subtract_points(username: str, points_to_subtract: int):
                 points = get_points(username)
 
                 # Set the points of the user
-                conn.execute(f"UPDATE bounties SET points = {max(0, points - points_to_subtract)} WHERE username = '{username}'")
+                conn.execute(sqlalchemy.text(f"UPDATE bounties SET points = {max(0, points - points_to_subtract)} WHERE username = '{username}'"))
 
         except pymysql.Error as e:
             print("MySQL Error:", e)
