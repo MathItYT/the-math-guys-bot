@@ -8,16 +8,10 @@ readme = "README.md"
 [tool.poetry.dependencies]
 python = ">=3.9,<4.0"
 python-dotenv = "^1.0.0"
-pandas = "^2.1.4"
 sympy = "^1.12"
 matplotlib = "^3.8.2"
-antlr4-python3-runtime = "4.11"
-google-generativeai = "^0.3.2"
-mysqlclient = "^2.2.1"
-py-cord = {git = "https://github.com/Pycord-Development/pycord.git", branch="master", extras=["voice"]}
-google-cloud-texttospeech = "^2.15.1"
-google-cloud-speech = "^2.23.0"
-google-cloud-storage = "^2.14.0"
+py-cord = {git = "https://github.com/Pycord-Development/pycord.git", branch="master"}
+google-generativeai = "^0.5.2"
 
 
 [tool.poetry.group.dev.dependencies]

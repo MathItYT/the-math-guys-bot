@@ -6,8 +6,6 @@ from the_math_guys_bot.plot import plot_expression
 from the_math_guys_bot.bounties_db import setup_users, add_points, subtract_points, get_points, get_leaderboard, get_rank, exchange_points
 import matplotlib.pyplot as plt
 from the_math_guys_bot.random_problem_set import random_problem_set
-from the_math_guys_bot.stt import speech_to_text
-from the_math_guys_bot.tts import text_to_speech
 import discord
 import time
 import random
@@ -61,81 +59,6 @@ async def on_member_join(member: discord.Member):
     general = bot.get_channel(GENERAL_ID)
     await general.send(f"¡Bienvenido {member}! Acá hay muchos aficionados a las matemáticas, computación, física, etc. ¡Esperamos que te sientas como en casa! :)")
     setup_users(member.guild)
-
-
-@bot.command(name="talk", description="Escucha y habla con los usuarios")
-async def talk(ctx: discord.ApplicationContext):
-    print(f"[Talk] {ctx.user}")
-    await ctx.response.defer()
-    voice = ctx.author.voice
-
-    if not voice:
-        await ctx.followup.send("No estás en un canal de voz.")
-        return
-    
-    await ctx.followup.send("Escuchando...")
-    vc = await voice.channel.connect()
-    connections[ctx.guild.id] = vc
-    vc.start_recording(
-        discord.sinks.WaveSink(),
-        once_done,
-        ctx.author,
-        vc
-    )
-
-
-@bot.command(name="stop", description="Detiene la conversación")
-async def stop(ctx: discord.ApplicationContext):
-    print(f"[Stop] {ctx.user}")
-    await ctx.response.defer()
-    vc = connections.get(ctx.guild.id)
-    if not vc:
-        await ctx.followup.send("No estás en una conversación o no estás corriendo el comando en el mismo canal.")
-        return
-    await ctx.followup.send("Deteniendo y procesando...")
-    vc.stop_recording()
-    del connections[ctx.guild.id]
-
-
-async def once_done(sink: discord.sinks.WaveSink, user: discord.User, vc: discord.VoiceClient):
-    audio: discord.sinks.AudioData = [
-        audio
-        for user_id, audio in sink.audio_data.items()
-        if user_id == user.id
-    ][0]
-    transcript = speech_to_text(audio.file)
-    print(f"[Talk] {user}: {transcript}")
-    response: str = generate_response(transcript, None).replace("*", "").replace("$", "")
-    print(f"[Talk] TheMathGuysBot: {response}")
-    filename = text_to_speech(response)
-    vc.play(discord.FFmpegPCMAudio(filename))
-    while vc.is_playing():
-        time.sleep(0)
-    await vc.disconnect()
-
-
-@bot.command(name="crear-encuesta", description="Crea una encuesta")
-async def crear_encuesta(ctx: discord.ApplicationContext, pregunta: str, opciones: str):
-    print(f"[Encuesta] {ctx.user}: {pregunta}, {opciones}")
-    if not opciones or not pregunta:
-        await ctx.response.send_message("Por favor, ingresa las opciones separadas por comas.")
-        return
-    await ctx.response.defer()
-    opciones = opciones.split(",")
-    if len(opciones) > 9:
-        await ctx.followup.send("No puedes tener más de 9 opciones.")
-        return
-    opciones_emoji: str = ""
-    for i, opcion in enumerate(opciones, start=1):
-        opciones_emoji += f"{EMOJI_MAP[i]}: {opcion}\n"
-    embed = discord.Embed(title=pregunta,
-                  description=f"Reacciona con el emoji correspondiente a la opción que quieras elegir.\n\n{opciones_emoji}")
-    embed.set_footer(text=f"Encuesta creada por {ctx.user}")
-    message: discord.Message = await ctx.followup.send(embed=embed, wait=True)
-    for i in range(1, len(opciones) + 1):
-        await message.add_reaction(EMOJI_MAP[i])
-    with open("polls_ids.txt", "a") as f:
-        f.write(f"{message.id}\n")
 
 
 @bot.event
@@ -258,30 +181,6 @@ async def set_aleatorio(ctx: discord.ApplicationContext):
     await ctx.followup.send(file=discord.File(f"problems/set{random_problem_set()}.pdf"))
 
 
-@bot.command(name="regalo-pascua", description="¡Sorpresa!")
-async def regalo_pascua(ctx: discord.ApplicationContext):
-    if datetime.now().month != 3 or datetime.now().day != 31:
-        await ctx.response.send_message("Este comando solo está disponible el 31 de marzo.")
-        return
-    with open("pascua.txt", "r") as f:
-        if str(ctx.user.id) in f.read().split("\n"):
-            await ctx.response.send_message("Ya has recibido tu regalo de Pascua.")
-            return
-    await ctx.response.send_message(f"¡Felices Pascuas, {ctx.user.mention}!\nRevisa tu DM para ver qué te dejó el conejito 🐰🥚🌷")
-    inicial = "¡Hola! Soy el conejito de Pascua 🐰 y te dedicaré una pista clave para resolver el reto, pues quiero que ganes esa suscripción de Nitro. ¡Es tu día de suerte! 🍀\n**Pista**: "
-    pista1 = """||Un punto está dentro de un polígono si y solo si cualquier semirrecta que parte de ese punto corta al polígono en un número impar de puntos.
-Puedes usar esta propiedad para determinar si un punto está dentro de un polígono o no. 🤔||\n"""
-    pista2 = """||Si tienes el cómo determinar si un punto está dentro de un polígono, puedes implementar un método para determinar si un rayo intersecta un segmento de recta.
-La clave es la ecuación de la recta y restringir los dominios de las coordenadas de los puntos. 🧐||\n"""
-    pistas = [pista1, pista2]
-    pista_seleccionada = random.choice(pistas)
-    tips = "**Tips**: Para la demostración, puedes considerar la pista como un regalo de Pascua, es decir, no debes demostrar lo que se dice ahí. ¡Buena suerte! 🎁\n"
-    advertencia = "Recuerda que la pista es un regalo exclusivo para ti, no debes compartirla con nadie más, o cosas muy malas pasarán. ¡Que ganes la suscripción de Nitro! 🏆"
-    with open("pascua.txt", "a") as f:
-        f.write(f"{ctx.user.id}\n")
-    await ctx.user.send(inicial + pista_seleccionada + tips + advertencia)
-
-
 def main():
     plt.rcParams["figure.facecolor"] = (0, 0, 0, 0)
     plt.rcParams["axes.facecolor"] = (0, 0, 0, 0)
@@ -293,7 +192,6 @@ def main():
     plt.rcParams['ytick.color'] = (1, 1, 1, 1)
     plt.rcParams["figure.figsize"] = (2000/300, 2000/300)
     plt.rcParams["figure.dpi"] = 300
-    setup_users(bot.get_guild(SERVER_ID))
     bot.run(DISCORD_TOKEN)
 
 

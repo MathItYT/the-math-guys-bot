@@ -1,334 +1,68 @@
-from dotenv import load_dotenv
 from discord import Guild
-import pymysql.cursors
-
-# Load environment variables from the .env file
-load_dotenv()
+import json
 import os
-import pymysql
-import sqlalchemy
-from google.cloud.sql.connector import Connector
-
-
-def init_connection_pool(connector: Connector) -> sqlalchemy.engine.Engine:
-    # function used to generate database connection
-    def getconn() -> pymysql.connections.Connection:
-        conn = connector.connect(
-            os.getenv("CONNECTION_NAME"),
-            "pymysql",
-            user=os.getenv("DATABASE_USERNAME"),
-            password=os.getenv("DATABASE_PASSWORD"),
-            db=os.getenv("DATABASE"),
-        )
-        return conn
-
-    # create connection pool
-    pool = sqlalchemy.create_engine(
-        "mysql+pymysql://",
-        creator=getconn,
-    )
-    return pool
 
 
 def setup_users(guild: Guild):
-    with Connector() as connector:
-        connection = init_connection_pool(connector)
-
-        try:
-            # Create a cursor to interact with the database
-            with connection.connect() as conn:
-                # Create database if it doesn't exist
-                conn.execute(sqlalchemy.text("""CREATE TABLE IF NOT EXISTS bounties(
-                username VARCHAR(255) NOT NULL,
-                points INT UNSIGNED NOT NULL,
-                PRIMARY KEY (username)
-            )""")
-                )
-
-                # Adds all users to the database
-                for member in guild.members:
-                    conn.execute(sqlalchemy.text(f"INSERT IGNORE INTO bounties (username, points) VALUES ('{member}', 10)"))
-
-        except pymysql.Error as e:
-            print("MySQL Error:", e)
-        
-        finally:
-            connection.dispose()
+    if os.path.exists("bounties.json"):
+        with open("bounties.json", "r") as f:
+            bounties = json.load(f)
+    else:
+        bounties = {}
+    
+    for member in guild.members:
+        if member.bot:
+            continue
+        if member.id not in bounties:
+            bounties[member.id] = 0
+    
+    with open("bounties.json", "w") as f:
+        json.dump(bounties, f)
 
 
 def add_points(username: str, points_to_add: int):
-#     connection = MySQLdb.connect(
-#         host=os.getenv("DATABASE_HOST"),
-#         user=os.getenv("DATABASE_USERNAME"),
-#         passwd=os.getenv("DATABASE_PASSWORD"),
-#         db=os.getenv("DATABASE"),
-#         autocommit=True,
-#         ssl_mode="VERIFY_IDENTITY",
-#         # See https://planetscale.com/docs/concepts/secure-connections#ca-root-configuration
-#         # to determine the path to your operating systems certificate file.
-#     )
+    if not os.path.exists("bounties.json"):
+        raise FileNotFoundError("bounties.json not found. Please run setup_users(guild) first.")
+    with open("bounties.json", "r") as f:
+        bounties = json.load(f)
 
-#     try:
-#         # Create a cursor to interact with the database
-#         cursor = connection.cursor()
+    if username not in bounties:
+        raise ValueError(f"User {username} not found in bounties.json. Please run setup_users(guild) first.")
+    bounties[username] += points_to_add
+    bounties[username] = max(0, bounties[username])
 
-#         # Get the points of the user
-#         points = get_points(username)
-
-#         # Set the points of the user
-#         cursor.execute(f"UPDATE bounties SET points = {points + points_to_add} WHERE username = '{username}'")
-#         # Commit the changes
-#         connection.commit()
-
-#     except MySQLdb.Error as e:
-#         print("MySQL Error:", e)
-
-#     finally:
-#         # Close the cursor and connection
-#         cursor.close()
-#         connection.close()
-
-
-# def subtract_points(username: str, points_to_subtract: int):
-#     connection = MySQLdb.connect(
-#         host=os.getenv("DATABASE_HOST"),
-#         user=os.getenv("DATABASE_USERNAME"),
-#         passwd=os.getenv("DATABASE_PASSWORD"),
-#         db=os.getenv("DATABASE"),
-#         autocommit=True,
-#         ssl_mode="VERIFY_IDENTITY",
-#         # See https://planetscale.com/docs/concepts/secure-connections#ca-root-configuration
-#         # to determine the path to your operating systems certificate file.
-#     )
-
-#     try:
-#         # Create a cursor to interact with the database
-#         cursor = connection.cursor()
-
-#         # Get the points of the user
-#         points = get_points(username)
-
-#         # Set the points of the user
-#         cursor.execute(f"UPDATE bounties SET points = {max(0, points - points_to_subtract)} WHERE username = '{username}'")
-#         # Commit the changes
-#         connection.commit()
-
-#     except MySQLdb.Error as e:
-#         print("MySQL Error:", e)
-
-#     finally:
-#         # Close the cursor and connection
-#         cursor.close()
-#         connection.close()
-    with Connector() as connector:
-        connection = init_connection_pool(connector)
-
-        try:
-            # Create a cursor to interact with the database
-            with connection.connect() as conn:
-                # Get the points of the user
-                points = get_points(username)
-
-                # Set the points of the user
-                conn.execute(sqlalchemy.text(f"UPDATE bounties SET points = {points + points_to_add} WHERE username = '{username}'"))
-
-        except pymysql.Error as e:
-            print("MySQL Error:", e)
-        
-        finally:
-            connection.dispose()
+    with open("bounties.json", "w") as f:
+        json.dump(bounties, f)
 
 
 def get_points(username: str) -> int:
-    # connection = MySQLdb.connect(
-    #     host=os.getenv("DATABASE_HOST"),
-    #     user=os.getenv("DATABASE_USERNAME"),
-    #     passwd=os.getenv("DATABASE_PASSWORD"),
-    #     db=os.getenv("DATABASE"),
-    #     autocommit=True,
-    #     ssl_mode="VERIFY_IDENTITY",
-    #     # See https://planetscale.com/docs/concepts/secure-connections#ca-root-configuration
-    #     # to determine the path to your operating systems certificate file.
-    # )
+    with open("bounties.json", "r") as f:
+        bounties = json.load(f)
 
-    # try:
-    #     # Create a cursor to interact with the database
-    #     cursor = connection.cursor()
-
-    #     # Get the points of the user
-    #     cursor.execute(f"SELECT points FROM bounties WHERE username = '{username}'")
-    #     points = cursor.fetchone()[0]
-
-    #     return points
-
-    # except MySQLdb.Error as e:
-    #     print("MySQL Error:", e)
-
-    # finally:
-    #     # Close the cursor and connection
-    #     cursor.close()
-    #     connection.close()
-    with Connector() as connector:
-        connection = init_connection_pool(connector)
-
-        try:
-            # Create a cursor to interact with the database
-            with connection.connect() as conn:
-                # Get the points of the user
-                points: sqlalchemy.CursorResult = conn.execute(sqlalchemy.text(f"SELECT points FROM bounties WHERE username = '{username}'"))
-                points = points.fetchone()[0]
-                return points.scalar()
-
-        except pymysql.Error as e:
-            print("MySQL Error:", e)
-        
-        finally:
-            connection.dispose()
+    if username not in bounties:
+        raise ValueError(f"User {username} not found in bounties.json. Please run setup_users(guild) first.")
+    return bounties[username]
 
 
 def get_leaderboard() -> list[tuple[str, int]]:
-    # connection = MySQLdb.connect(
-    #     host=os.getenv("DATABASE_HOST"),
-    #     user=os.getenv("DATABASE_USERNAME"),
-    #     passwd=os.getenv("DATABASE_PASSWORD"),
-    #     db=os.getenv("DATABASE"),
-    #     autocommit=True,
-    #     ssl_mode="VERIFY_IDENTITY",
-    #     # See https://planetscale.com/docs/concepts/secure-connections#ca-root-configuration
-    #     # to determine the path to your operating systems certificate file.
-    # )
+    with open("bounties.json", "r") as f:
+        bounties = json.load(f)
 
-    # try:
-    #     # Create a cursor to interact with the database
-    #     cursor = connection.cursor()
-
-    #     # Get the points of the user
-    #     cursor.execute(f"SELECT username, points FROM bounties ORDER BY points DESC")
-    #     leaderboard = cursor.fetchall()
-
-    #     return leaderboard
-
-    # except MySQLdb.Error as e:
-    #     print("MySQL Error:", e)
-
-    # finally:
-    #     # Close the cursor and connection
-    #     cursor.close()
-    #     connection.close()
-    with Connector() as connector:
-        connection = init_connection_pool(connector)
-
-        try:
-            # Create a cursor to interact with the database
-            with connection.connect() as conn:
-                # Get the points of the user
-                leaderboard = conn.execute(sqlalchemy.text(f"SELECT username, points FROM bounties ORDER BY points DESC"))
-                leaderboard = leaderboard.fetchall()
-                leaderboard = [(row[0], row[1]) for row in leaderboard]
-                leaderboard = [(row[0].scalar(), row[1].scalar()) for row in leaderboard]
-                return leaderboard
-
-        except pymysql.Error as e:
-            print("MySQL Error:", e)
-        
-        finally:
-            connection.dispose()
+    return list(sorted(bounties.items(), key=lambda x: x[1], reverse=True))
 
 
 def get_rank(username: str) -> int:
-    # connection = MySQLdb.connect(
-    #     host=os.getenv("DATABASE_HOST"),
-    #     user=os.getenv("DATABASE_USERNAME"),
-    #     passwd=os.getenv("DATABASE_PASSWORD"),
-    #     db=os.getenv("DATABASE"),
-    #     autocommit=True,
-    #     ssl_mode="VERIFY_IDENTITY",
-    #     # See https://planetscale.com/docs/concepts/secure-connections#ca-root-configuration
-    #     # to determine the path to your operating systems certificate file.
-    # )
-
-    # try:
-    #     # Create a cursor to interact with the database
-    #     cursor = connection.cursor()
-
-    #     # Get the points of the user
-    #     cursor.execute(f"SELECT COUNT(*) FROM bounties WHERE points > (SELECT points FROM bounties WHERE username = '{username}')")
-    #     rank = cursor.fetchone()[0] + 1
-
-    #     return rank
-
-    # except MySQLdb.Error as e:
-    #     print("MySQL Error:", e)
-
-    # finally:
-    #     # Close the cursor and connection
-    #     cursor.close()
-    #     connection.close()
-    with Connector() as connector:
-        connection = init_connection_pool(connector)
-
-        try:
-            # Create a cursor to interact with the database
-            with connection.connect() as conn:
-                # Get the points of the user
-                rank = conn.execute(sqlalchemy.text(f"SELECT COUNT(*) FROM bounties WHERE points > (SELECT points FROM bounties WHERE username = '{username}')")).fetchone()[0].scalar() + 1
-                return rank
-
-        except pymysql.Error as e:
-            print("MySQL Error:", e)
-        
-        finally:
-            connection.dispose()
+    leaderboard = get_leaderboard()
+    for i, (user, _) in enumerate(leaderboard):
+        if user == username:
+            return i + 1
+    return -1
 
 
 def subtract_points(username: str, points_to_subtract: int):
-    with Connector() as connector:
-        connection = init_connection_pool(connector)
-
-        try:
-            # Create a cursor to interact with the database
-            with connection.connect() as conn:
-                # Get the points of the user
-                points = get_points(username)
-
-                # Set the points of the user
-                conn.execute(sqlalchemy.text(f"UPDATE bounties SET points = {max(0, points - points_to_subtract)} WHERE username = '{username}'"))
-
-        except pymysql.Error as e:
-            print("MySQL Error:", e)
-        
-        finally:
-            connection.dispose()
+    add_points(username, -points_to_subtract)
 
 
 def exchange_points(username1: str, username2: str, points: int):
-    # connection = MySQLdb.connect(
-    #     host=os.getenv("DATABASE_HOST"),
-    #     user=os.getenv("DATABASE_USERNAME"),
-    #     passwd=os.getenv("DATABASE_PASSWORD"),
-    #     db=os.getenv("DATABASE"),
-    #     autocommit=True,
-    #     ssl_mode="VERIFY_IDENTITY",
-    #     # See https://planetscale.com/docs/concepts/secure-connections#ca-root-configuration
-    #     # to determine the path to your operating systems certificate file.
-    # )
-
-    # try:
-    #     # Create a cursor to interact with the database
-    #     cursor = connection.cursor()
-
-    #     # Add points to user 1
-    #     add_points(username1, points)
-
-    #     # Subtract points from user 2
-    #     subtract_points(username2, points)
-
-    # except MySQLdb.Error as e:
-    #     print("MySQL Error:", e)
-    
-    # finally:
-    #     # Close the cursor and connection
-    #     cursor.close()
-    #     connection.close()
     add_points(username1, points)
     subtract_points(username2, points)
