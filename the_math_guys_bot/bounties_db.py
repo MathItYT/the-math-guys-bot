@@ -55,7 +55,7 @@ def get_leaderboard(guild: Guild) -> list[tuple[str, int]]:
         member = guild.get_member(user)
         if member:
             new_items.append((member.name, points))
-    return items[:10]
+    return new_items[:10]
 
 
 
