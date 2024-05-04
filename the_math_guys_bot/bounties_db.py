@@ -54,6 +54,7 @@ def get_leaderboard(guild: Guild) -> list[tuple[str, int]]:
     for i, user in enumerate(users):
         if user is None:
             items.pop(i)
+            continue
         items[i] = (user.display_name, items[i][1])
     return items[:10]
 
