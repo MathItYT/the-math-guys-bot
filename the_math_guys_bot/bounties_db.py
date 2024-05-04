@@ -51,11 +51,10 @@ def get_leaderboard(guild: Guild) -> list[tuple[str, int]]:
     items = list(sorted(bounties.items(), key=lambda x: x[1], reverse=True))
     ids = [item[0] for item in items]
     users = [guild.get_member(int(user_id)) for user_id in ids]
-    users = [user.display_name for user in users]
     for i, user in enumerate(users):
-        items[i] = (user, items[i][1])
         if user is None:
             items.pop(i)
+        items[i] = (user.display_name, items[i][1])
     return items[:10]
 
 
