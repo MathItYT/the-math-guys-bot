@@ -3,7 +3,7 @@ import os
 from typing import Final
 from the_math_guys_bot.handle_message import handle_message
 from the_math_guys_bot.plot import plot_expression
-from the_math_guys_bot.bounties_db import setup_users, add_points, subtract_points, get_points, get_leaderboard, get_rank, exchange_points
+from the_math_guys_bot.bounties_db import setup_users, add_points, subtract_points, get_points, get_leaderboard, exchange_points
 import matplotlib.pyplot as plt
 from the_math_guys_bot.random_problem_set import random_problem_set
 import discord
