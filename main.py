@@ -1,15 +1,12 @@
 from dotenv import load_dotenv
 import os
 from typing import Final
-from the_math_guys_bot.handle_message import handle_message, generate_response
+from the_math_guys_bot.handle_message import handle_message
 from the_math_guys_bot.plot import plot_expression
 from the_math_guys_bot.bounties_db import setup_users, add_points, subtract_points, get_points, get_leaderboard, get_rank, exchange_points
 import matplotlib.pyplot as plt
 from the_math_guys_bot.random_problem_set import random_problem_set
 import discord
-import time
-import random
-from datetime import datetime
 
 
 load_dotenv()
@@ -130,7 +127,7 @@ async def puntos(ctx: discord.ApplicationContext, username: str):
 async def ranking(ctx: discord.ApplicationContext):
     print(f"[Ranking] {ctx.user}")
     await ctx.response.defer()
-    leaderboard = get_leaderboard(ctx.guild)
+    leaderboard = await get_leaderboard(ctx.guild)
     embed = discord.Embed(title="Ranking de puntos")
     for i, (username, points) in enumerate(leaderboard, start=1):
         embed.add_field(name=f"{i}. {username}", value=f"{points} puntos", inline=False)
@@ -172,7 +169,7 @@ async def graficar(ctx: discord.ApplicationContext, funciones: str, rango_x: str
     if isinstance(img, Exception):
         await ctx.followup.send(f"Ocurrió un error al graficar la función: {img}")
         return
-    await ctx.followup.send(file=discord.File(img, "plot.png"))
+    await ctx.followup.send(content=f"Funciones graficadas: {",".join(funciones.split(';'))}", file=discord.File(img, "plot.png"))
     img.close()
 
 

@@ -44,7 +44,7 @@ def get_points(user: Member) -> int:
     return bounties[user.id]
 
 
-def get_leaderboard(guild: Guild) -> list[tuple[str, int]]:
+async def get_leaderboard(guild: Guild) -> list[tuple[str, int]]:
     with open("bounties.json", "r") as f:
         bounties = json.load(f)
 
@@ -52,7 +52,7 @@ def get_leaderboard(guild: Guild) -> list[tuple[str, int]]:
     # Convert user ids to usernames
     new_items = []
     for user, points in items:
-        member = guild.get_member(user)
+        member = await guild.fetch_member(user)
         if member:
             new_items.append((member.name, points))
     return new_items[:10]
