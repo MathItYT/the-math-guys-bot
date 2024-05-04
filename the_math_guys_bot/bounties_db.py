@@ -52,9 +52,11 @@ async def get_leaderboard(guild: Guild) -> list[tuple[str, int]]:
     # Convert user ids to usernames
     new_items = []
     for user, points in items:
-        member = await guild.fetch_member(user)
-        if member:
-            new_items.append((member.name, points))
+        try:
+            member = await guild.fetch_member(user)
+        except:
+            continue
+        new_items.append((member.name, points))
     return new_items[:10]
 
 
