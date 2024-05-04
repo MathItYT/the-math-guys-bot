@@ -49,14 +49,12 @@ def get_leaderboard(guild: Guild) -> list[tuple[str, int]]:
         bounties = json.load(f)
 
     items = list(sorted(bounties.items(), key=lambda x: x[1], reverse=True))
-    ids = [item[0] for item in items]
-    users = [guild.get_member(int(user_id)) for user_id in ids]
-    for i, user in enumerate(users):
-        if user is None:
-            items.pop(i)
-            users.pop(i)
-    for i, user in enumerate(users):
-        items[i] = (user.display_name, items[i][1])
+    # Convert user ids to usernames
+    new_items = []
+    for user, points in items:
+        member = guild.get_member(user)
+        if member:
+            new_items.append((member.name, points))
     return items[:10]
 
 
