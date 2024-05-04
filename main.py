@@ -134,15 +134,6 @@ async def ranking(ctx: discord.ApplicationContext):
     await ctx.followup.send(embed=embed)
 
 
-@bot.command(name="rango", description="Muestra el rango de un usuario")
-async def rango(ctx: discord.ApplicationContext, username: str):
-    print(f"[Rango] {ctx.user}: {username}")
-    await ctx.response.defer()
-    user = ctx.guild.get_member_named(username)
-    rank = get_rank(user.id)
-    await ctx.followup.send(f"{username} está en el puesto {rank}.")
-
-
 @bot.command(name="intercambiar-puntos", description="Intercambia puntos entre dos usuarios")
 async def intercambiar_puntos(ctx: discord.ApplicationContext, username1: str, username2: str, points: int):
     print(f"[Intercambiar puntos] {ctx.user}: {username1}, {username2}, {points}")

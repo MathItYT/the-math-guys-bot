@@ -26,10 +26,10 @@ def add_points(username: Member, points_to_add: int):
     with open("bounties.json", "r") as f:
         bounties = json.load(f)
 
-    if username.id not in bounties:
+    if str(username.id) not in bounties:
         raise ValueError(f"User {username} not found in bounties.json. Please run setup_users(guild) first.")
-    bounties[username.id] += points_to_add
-    bounties[username.id] = max(0, bounties[username.id])
+    bounties[str(username.id)] += points_to_add
+    bounties[str(username.id)] = max(0, bounties[str(username.id)])
 
     with open("bounties.json", "w") as f:
         json.dump(bounties, f)
@@ -38,8 +38,7 @@ def add_points(username: Member, points_to_add: int):
 def get_points(user: Member) -> int:
     with open("bounties.json", "r") as f:
         bounties = json.load(f)
-
-    if user.id not in bounties:
+    if str(user.id) not in bounties:
         raise ValueError(f"User with id {user.id} not found in bounties.json. Please run setup_users(guild) first.")
     return bounties[user.id]
 
@@ -58,15 +57,6 @@ async def get_leaderboard(guild: Guild) -> list[tuple[str, int]]:
             continue
         new_items.append((member.name, points))
     return new_items[:10]
-
-
-
-def get_rank(id_: int) -> int:
-    leaderboard = get_leaderboard()
-    for i, (user, _) in enumerate(leaderboard):
-        if user == id_:
-            return i + 1
-    return -1
 
 
 def subtract_points(username: Member, points_to_subtract: int):
