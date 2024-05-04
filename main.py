@@ -169,7 +169,8 @@ async def graficar(ctx: discord.ApplicationContext, funciones: str, rango_x: str
     if isinstance(img, Exception):
         await ctx.followup.send(f"Ocurrió un error al graficar la función: {img}")
         return
-    await ctx.followup.send(content=f"Funciones graficadas: {",".join(funciones.split(';'))}", file=discord.File(img, "plot.png"))
+    funciones = ", ".join(funciones.split(";"))
+    await ctx.followup.send(content=f"Funciones graficadas: {funciones}", file=discord.File(img, "plot.png"))
     img.close()
 
 
