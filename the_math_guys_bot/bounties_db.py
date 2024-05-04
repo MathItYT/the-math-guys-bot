@@ -40,7 +40,7 @@ def get_points(user: Member) -> int:
         bounties = json.load(f)
     if str(user.id) not in bounties:
         raise ValueError(f"User with id {user.id} not found in bounties.json. Please run setup_users(guild) first.")
-    return bounties[user.id]
+    return bounties[str(user.id)]
 
 
 async def get_leaderboard(guild: Guild) -> list[tuple[str, int]]:
