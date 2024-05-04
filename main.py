@@ -98,7 +98,8 @@ async def sumar_puntos(ctx: discord.ApplicationContext, username: str, points_to
         await ctx.response.send_message("Solo MathLike puede usar este comando.")
         return
     await ctx.response.defer()
-    add_points(username, points_to_add)
+    user = ctx.guild.get_member_named(username)
+    add_points(user, points_to_add)
     points = get_points(username)
     await ctx.followup.send(f"Se le han sumado {points_to_add} puntos a {username}. Ahora tiene {points} puntos.")
 
@@ -110,7 +111,8 @@ async def restar_puntos(ctx: discord.ApplicationContext, username: str, points_t
         await ctx.response.send_message("Solo MathLike puede usar este comando.")
         return
     await ctx.response.defer()
-    subtract_points(username, points_to_subtract)
+    user = ctx.guild.get_member_named(username)
+    subtract_points(user, points_to_subtract)
     points = get_points(username)
     await ctx.followup.send(f"Se le han restado {points_to_subtract} puntos a {username}. Ahora tiene {points} puntos.")
 
@@ -119,7 +121,8 @@ async def restar_puntos(ctx: discord.ApplicationContext, username: str, points_t
 async def puntos(ctx: discord.ApplicationContext, username: str):
     print(f"[Puntos] {ctx.user}: {username}")
     await ctx.response.defer()
-    points = get_points(username)
+    user = ctx.guild.get_member_named(username)
+    points = get_points(user)
     await ctx.followup.send(f"{username} tiene {points} puntos.")
 
 
@@ -127,11 +130,9 @@ async def puntos(ctx: discord.ApplicationContext, username: str):
 async def ranking(ctx: discord.ApplicationContext):
     print(f"[Ranking] {ctx.user}")
     await ctx.response.defer()
-    leaderboard = get_leaderboard()
+    leaderboard = get_leaderboard(ctx.guild)
     embed = discord.Embed(title="Ranking de puntos")
     for i, (username, points) in enumerate(leaderboard, start=1):
-        if i == 11:
-            break
         embed.add_field(name=f"{i}. {username}", value=f"{points} puntos", inline=False)
     await ctx.followup.send(embed=embed)
 
@@ -140,7 +141,8 @@ async def ranking(ctx: discord.ApplicationContext):
 async def rango(ctx: discord.ApplicationContext, username: str):
     print(f"[Rango] {ctx.user}: {username}")
     await ctx.response.defer()
-    rank = get_rank(username)
+    user = ctx.guild.get_member_named(username)
+    rank = get_rank(user.id)
     await ctx.followup.send(f"{username} está en el puesto {rank}.")
 
 
@@ -151,7 +153,9 @@ async def intercambiar_puntos(ctx: discord.ApplicationContext, username1: str, u
         await ctx.response.send_message("Solo MathLike puede usar este comando.")
         return
     await ctx.response.defer()
-    exchange_points(username1, username2, points)
+    user1 = ctx.guild.get_member_named(username1)
+    user2 = ctx.guild.get_member_named(username2)
+    exchange_points(user1, user2, points)
     points1 = get_points(username1)
     points2 = get_points(username2)
     await ctx.followup.send(f"Se han intercambiado {points} puntos entre {username1} y {username2}. Ahora {username1} tiene {points1} puntos y {username2} tiene {points2} puntos.")

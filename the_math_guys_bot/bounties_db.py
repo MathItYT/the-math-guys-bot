@@ -1,4 +1,4 @@
-from discord import Guild
+from discord import Guild, Member
 import json
 import os
 
@@ -20,49 +20,58 @@ def setup_users(guild: Guild):
         json.dump(bounties, f)
 
 
-def add_points(username: str, points_to_add: int):
+def add_points(username: Member, points_to_add: int):
     if not os.path.exists("bounties.json"):
         raise FileNotFoundError("bounties.json not found. Please run setup_users(guild) first.")
     with open("bounties.json", "r") as f:
         bounties = json.load(f)
 
-    if username not in bounties:
+    if username.id not in bounties:
         raise ValueError(f"User {username} not found in bounties.json. Please run setup_users(guild) first.")
-    bounties[username] += points_to_add
-    bounties[username] = max(0, bounties[username])
+    bounties[username.id] += points_to_add
+    bounties[username.id] = max(0, bounties[username.id])
 
     with open("bounties.json", "w") as f:
         json.dump(bounties, f)
 
 
-def get_points(username: str) -> int:
+def get_points(user: Member) -> int:
     with open("bounties.json", "r") as f:
         bounties = json.load(f)
 
-    if username not in bounties:
-        raise ValueError(f"User {username} not found in bounties.json. Please run setup_users(guild) first.")
-    return bounties[username]
+    if user.id not in bounties:
+        raise ValueError(f"User with id {user.id} not found in bounties.json. Please run setup_users(guild) first.")
+    return bounties[user.id]
 
 
-def get_leaderboard() -> list[tuple[str, int]]:
+def get_leaderboard(guild: Guild) -> list[tuple[str, int]]:
     with open("bounties.json", "r") as f:
         bounties = json.load(f)
 
-    return list(sorted(bounties.items(), key=lambda x: x[1], reverse=True))
+    items = list(sorted(bounties.items(), key=lambda x: x[1], reverse=True))
+    ids = [item[0] for item in items]
+    users = [guild.get_member(int(user_id)) for user_id in ids]
+    users = [user.display_name for user in users]
+    for i, user in enumerate(users):
+        items[i] = (user, items[i][1])
+        if user is None:
+            items.pop(i)
+    return items[:10]
 
 
-def get_rank(username: str) -> int:
+
+def get_rank(id_: int) -> int:
     leaderboard = get_leaderboard()
     for i, (user, _) in enumerate(leaderboard):
-        if user == username:
+        if user == id_:
             return i + 1
     return -1
 
 
-def subtract_points(username: str, points_to_subtract: int):
+def subtract_points(username: Member, points_to_subtract: int):
     add_points(username, -points_to_subtract)
 
 
-def exchange_points(username1: str, username2: str, points: int):
+def exchange_points(username1: Member, username2: Member, points: int):
     add_points(username1, points)
     subtract_points(username2, points)
