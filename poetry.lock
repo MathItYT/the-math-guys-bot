@@ -122,6 +122,17 @@ files = [
 ]
 
 [[package]]
+name = "antlr4-python3-runtime"
+version = "4.11.0"
+description = "ANTLR 4.11.0 runtime for Python 3"
+optional = false
+python-versions = "*"
+files = [
+    {file = "antlr4-python3-runtime-4.11.0.tar.gz", hash = "sha256:6a46d4f6033c8d7e53c8975cee5d83b3ba1b48157f6beb09a4965062dacfe2e0"},
+    {file = "antlr4_python3_runtime-4.11.0-py3-none-any.whl", hash = "sha256:f523f91387283045f129c343b363a8dda3a07eea62721b8eda95f2d8b817b656"},
+]
+
+[[package]]
 name = "async-timeout"
 version = "4.0.3"
 description = "Timeout context manager for asyncio programs"
@@ -1898,4 +1909,4 @@ testing = ["big-O", "jaraco.functools", "jaraco.itertools", "more-itertools", "p
 [metadata]
 lock-version = "2.0"
 python-versions = ">=3.9,<4.0"
-content-hash = "183c86f5ee8c3a954d72e17343fd3183f3102e9e2ad452aa43cbeb53b9975d94"
+content-hash = "0fc15a8809f50c69af8352e151e05a94ea98bc6736177e82ef12fa87fc99d359"

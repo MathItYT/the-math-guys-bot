@@ -12,6 +12,7 @@ sympy = "^1.12"
 matplotlib = "^3.8.2"
 py-cord = {git = "https://github.com/Pycord-Development/pycord.git", branch="master"}
 google-generativeai = "^0.5.2"
+antlr4-python3-runtime = "4.11"
 
 
 [tool.poetry.group.dev.dependencies]
