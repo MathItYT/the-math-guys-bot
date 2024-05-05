@@ -167,7 +167,9 @@ async def intercambiar_puntos(ctx: discord.ApplicationContext, username1: str, u
 
 
 @bot.command(name="python", description="Ejecuta código de Python")
-async def python(ctx: discord.ApplicationContext, code: str):
+# Don't use `code: str` as a parameter, instead read the code from the message content
+async def python(ctx: discord.ApplicationContext):
+    code = ctx.message.content
     print(f"[Python] {ctx.user}: {code}")
     try:
         view = CodeApprovalUI(code)
