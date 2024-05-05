@@ -10,6 +10,7 @@ from dotenv import load_dotenv
 load_dotenv()
 
 
+MATHLIKE_ID: Final[int] = 546393436668952663
 CONTEXT: Final[str] = "Contexto: Tu nombre es TheMathGuysBot y eres un bot de Discord " \
                       "amigable, simpático y chistoso cuando es adecuado, te ríes de las " \
                       "bromas de los demás y cuando te piden hacer chistes, haces chistes." \
@@ -195,7 +196,7 @@ async def handle_message(message: Message) -> None:
     image, mime_type = await save_image(message)
     response: str = generate_response(message.content.replace(f"<@{BOT_USER_ID}>", ""), image, mime_type)
     roles = [role.name for role in message.author.roles]
-    if "Server Booster" not in roles:
+    if "Server Booster" not in roles and message.author.id != MATHLIKE_USER_ID:
         subtract_points(message.author, 10)
         points = get_points(message.author)
         response = f"{message.author.mention} {response}\n\nHas canjeado 10 puntos. Ahora tienes {points} puntos. Si no quieres perder puntos, hazte booster del servidor."
