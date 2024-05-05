@@ -98,7 +98,7 @@ async def sumar_puntos(ctx: discord.ApplicationContext, username: str, points_to
     await ctx.response.defer()
     user = ctx.guild.get_member_named(username)
     add_points(user, points_to_add)
-    points = get_points(username)
+    points = get_points(user)
     await ctx.followup.send(f"Se le han sumado {points_to_add} puntos a {username}. Ahora tiene {points} puntos.")
 
 
@@ -111,7 +111,7 @@ async def restar_puntos(ctx: discord.ApplicationContext, username: str, points_t
     await ctx.response.defer()
     user = ctx.guild.get_member_named(username)
     subtract_points(user, points_to_subtract)
-    points = get_points(username)
+    points = get_points(user)
     await ctx.followup.send(f"Se le han restado {points_to_subtract} puntos a {username}. Ahora tiene {points} puntos.")
 
 
@@ -155,8 +155,8 @@ async def intercambiar_puntos(ctx: discord.ApplicationContext, username1: str, u
     user1 = ctx.guild.get_member_named(username1)
     user2 = ctx.guild.get_member_named(username2)
     exchange_points(user1, user2, points)
-    points1 = get_points(username1)
-    points2 = get_points(username2)
+    points1 = get_points(user1)
+    points2 = get_points(user2)
     await ctx.followup.send(f"Se han intercambiado {points} puntos entre {username1} y {username2}. Ahora {username1} tiene {points1} puntos y {username2} tiene {points2} puntos.")
 
 
