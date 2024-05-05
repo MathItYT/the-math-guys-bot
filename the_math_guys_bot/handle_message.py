@@ -172,6 +172,8 @@ class CodeApprovalUI(discord.ui.View):
             while process.poll() is None:
                 out, _ = process.communicate()
                 await out_message.edit(content=f"Output:\n```\n{out.decode()}\n```")
+            if process.stdout.read() != b'':
+                await out_message.edit(content=f"Output:\n```\n{process.stdout.read().decode()}\n```")
             if process.stderr.read() != b'':
                 await interaction.channel.send("Error:\n```\n" + process.stderr.read().decode() + "\n```")
         except Exception as e:
