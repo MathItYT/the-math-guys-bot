@@ -156,7 +156,7 @@ chat = model.start_chat(history=[
 
 class CodeApprovalUI(discord.ui.View):
     def __init__(self, code: str):
-        self.code = code.split("```py\n")[1].split("\n```")[0]
+        self.code = code.removeprefix("```py\n").removesuffix("\n```")
         super().__init__()
 
     @discord.ui.button(label="Approve", style=discord.ButtonStyle.green)
