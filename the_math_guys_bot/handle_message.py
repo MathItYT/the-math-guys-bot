@@ -236,13 +236,13 @@ def generate_response(message: str, image: Optional[bytes], mime_type: Optional[
 
 
 async def handle_message(message: Message) -> None:
-    if BOT_USER_ID not in [user.id for user in message.mentions]:
-        return
     if message.author.bot:
         return
     if message.content.startswith("```py\n") and message.content.endswith("\n```"):
         view = CodeApprovalUI(message.content)
         await message.channel.send("¿Deseas aprobar o rechazar este código?", view=view)
+        return
+    if BOT_USER_ID not in [user.id for user in message.mentions]:
         return
     image, mime_type = await save_image(message)
     response: str = generate_response(message.content.replace(f"<@{BOT_USER_ID}>", ""), image, mime_type)
