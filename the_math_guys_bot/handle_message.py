@@ -174,13 +174,13 @@ class CodeApprovalUI(discord.ui.View):
             for _ in iter(process.stdout.readline, b""):
                 all_lines = process.stdout.readlines()
                 all_lines = [line.decode("utf-8") for line in all_lines]
-                out = "\n".join(all_lines)
+                out = "```\n" + "".join(all_lines) + "\n```"
                 await out_message.edit(content=out)
             err_message = await interaction.channel.send("Error:")
             for _ in iter(process.stderr.readline, b""):
                 all_lines = process.stderr.readlines()
                 all_lines = [line.decode("utf-8") for line in all_lines]
-                err = "\n".join(all_lines)
+                err = "```\n" + "".join(all_lines) + "\n```"
                 await err_message.edit(content=err)
         except Exception as e:
             await interaction.channel.send(f"Error: {e}")
