@@ -178,7 +178,7 @@ class CodeApprovalUI(discord.ui.View):
             if process.stderr.read() != b"":
                 err_message = await interaction.channel.send("Error:")
                 for _ in iter(process.stderr.readline, b""):
-                    all_lines = process.stderr.readlines()
+                    all_lines = process.stderr.read().decode("utf-8")
                     err = "```\n" + all_lines + "\n```"
                     await err_message.edit(content=err)
         except Exception as e:
