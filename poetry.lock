@@ -1598,21 +1598,6 @@ socks = ["PySocks (>=1.5.6,!=1.5.7)"]
 use-chardet-on-py3 = ["chardet (>=3.0.2,<6)"]
 
 [[package]]
-name = "restrictedpython"
-version = "7.1"
-description = "RestrictedPython is a defined subset of the Python language which allows to provide a program input into a trusted environment."
-optional = false
-python-versions = ">=3.7, <3.13"
-files = [
-    {file = "RestrictedPython-7.1-py3-none-any.whl", hash = "sha256:56d0c73e5de1757702053383601b0fcd3fb2e428039ee1df860409ad67b17d2b"},
-    {file = "RestrictedPython-7.1.tar.gz", hash = "sha256:875aeb51c139d78e34cef8605dc65309b449168060dd08551a1fe9edb47cb9a5"},
-]
-
-[package.extras]
-docs = ["Sphinx", "sphinx-rtd-theme"]
-test = ["pytest", "pytest-mock"]
-
-[[package]]
 name = "rsa"
 version = "4.9"
 description = "Pure-Python RSA implementation"
@@ -1924,4 +1909,4 @@ testing = ["big-O", "jaraco.functools", "jaraco.itertools", "more-itertools", "p
 [metadata]
 lock-version = "2.0"
 python-versions = ">=3.9,<3.13"
-content-hash = "64779fa9c86ece08e7a069ba42199de45a6f9938b6022decafb1859b8737156d"
+content-hash = "889e69a41153ede72a05c4eaaf94b9036ef7493441817fa0e45c1add49fcd7e9"
