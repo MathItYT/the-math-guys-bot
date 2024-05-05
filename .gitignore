@@ -7,3 +7,4 @@ __pycache__
 *.jpeg
 *.bmp
 client_secret.json
+bounties.json

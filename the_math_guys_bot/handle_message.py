@@ -1,8 +1,8 @@
 from discord import Message
+from the_math_guys_bot.bounties_db import subtract_points, get_points
 from typing import Final, Optional
 import google.generativeai as genai
 import google.ai.generativelanguage as glm
-from pathlib import Path
 import os
 from dotenv import load_dotenv
 
@@ -190,7 +190,15 @@ def generate_response(message: str, image: Optional[bytes], mime_type: Optional[
 
 
 async def handle_message(message: Message) -> None:
-    if BOT_USER_ID in [user.id for user in message.mentions]:
-        image, mime_type = await save_image(message)
-        response: str = generate_response(message.content.replace(f"<@{BOT_USER_ID}>", ""), image, mime_type)
-        await message.channel.send(response)
+    if BOT_USER_ID not in [user.id for user in message.mentions]:
+        return
+    image, mime_type = await save_image(message)
+    response: str = generate_response(message.content.replace(f"<@{BOT_USER_ID}>", ""), image, mime_type)
+    roles = [role.name for role in message.author.roles]
+    if "Server Booster" not in roles:
+        subtract_points(message.author, 10)
+        points = get_points(message.author)
+        response = f"{message.author.mention} {response}\n\nHas canjeado 10 puntos. Ahora tienes {points} puntos. Si no quieres perder puntos, hazte booster del servidor."
+    else:
+        response = f"{message.author.mention} {response}"
+    await message.channel.send(response)

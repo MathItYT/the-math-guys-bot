@@ -5,7 +5,6 @@ from the_math_guys_bot.handle_message import handle_message
 from the_math_guys_bot.plot import plot_expression
 from the_math_guys_bot.bounties_db import setup_users, add_points, subtract_points, get_points, get_leaderboard, exchange_points
 import matplotlib.pyplot as plt
-from the_math_guys_bot.random_problem_set import random_problem_set
 import discord
 import random
 
@@ -182,15 +181,6 @@ async def graficar(ctx: discord.ApplicationContext, funciones: str, rango_x: str
     funciones = ", ".join(funciones.split(";"))
     await ctx.followup.send(content=f"Funciones graficadas: {funciones}", file=discord.File(img, "plot.png"))
     img.close()
-
-
-@bot.command(name="set-aleatorio", description="Envía un set de problemas aleatorio de AMC Trivial")
-async def set_aleatorio(ctx: discord.ApplicationContext):
-    if ctx.user.id != MATHLIKE_ID:
-        await ctx.response.send_message("Solo MathLike puede usar este comando.")
-        return
-    await ctx.response.defer()
-    await ctx.followup.send(file=discord.File(f"problems/set{random_problem_set()}.pdf"))
 
 
 def main():

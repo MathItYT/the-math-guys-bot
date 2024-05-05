@@ -13,8 +13,9 @@ def setup_users(guild: Guild):
     for member in guild.members:
         if member.bot:
             continue
-        if member.id not in bounties:
-            bounties[member.id] = 0
+        if str(member.id) not in bounties or bounties[str(member.id)] == 0:
+            print(f"Setting up {member}")
+            bounties[str(member.id)] = 50
     
     with open("bounties.json", "w") as f:
         json.dump(bounties, f)
