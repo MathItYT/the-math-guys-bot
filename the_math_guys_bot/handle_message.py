@@ -170,19 +170,20 @@ class CodeApprovalUI(discord.ui.View):
             f.write(self.code)
         try:
             process = subprocess.Popen(["python", "temp.py"], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-            await interaction.followup.send("Output:")
+            out_message = await interaction.channel.send("Output:")
             for _ in iter(process.stdout.readline, b""):
                 all_lines = process.stdout.readlines()
                 all_lines = [line.decode("utf-8") for line in all_lines]
                 out = "\n".join(all_lines)
-                await interaction.followup.edit(content=f"Output:\n```\n{out}\n```")
+                await out_message.edit(content=out)
+            err_message = await interaction.channel.send("Error:")
             for _ in iter(process.stderr.readline, b""):
                 all_lines = process.stderr.readlines()
                 all_lines = [line.decode("utf-8") for line in all_lines]
                 err = "\n".join(all_lines)
-                await interaction.followup.edit(content=f"Output:\n```\n{err}\n```")
+                await err_message.edit(content=err)
         except Exception as e:
-            await interaction.followup.send(f"Error: {e}")
+            await interaction.channel.send(f"Error: {e}")
         finally:
             os.remove("temp.py")
             self.stop()
@@ -240,7 +241,7 @@ async def handle_message(message: Message) -> None:
         return
     if message.content.startswith("```py\n") and message.content.endswith("\n```"):
         view = CodeApprovalUI(message.content)
-        await message.channel.send("¿Deseas aprobar o rechazar este código?", view=view)
+        await message.channel.send(f"<@{MATHLIKE_USER_ID}> ¿Aceptas este código?", view=view)
         return
     if BOT_USER_ID not in [user.id for user in message.mentions]:
         return
