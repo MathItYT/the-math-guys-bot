@@ -102,6 +102,14 @@ async def sumar_puntos(ctx: discord.ApplicationContext, username: str, points_to
     await ctx.followup.send(f"Se le han sumado {points_to_add} puntos a {username}. Ahora tiene {points} puntos.")
 
 
+@bot.command(name="número-aleatorio", description="Genera un número aleatorio entre dos límites")
+async def numero_aleatorio(ctx: discord.ApplicationContext, lower: int, upper: int):
+    print(f"[Número aleatorio] {ctx.user}: {lower}, {upper}")
+    await ctx.response.defer()
+    number = random.randint(lower, upper)
+    await ctx.followup.send(f"Número aleatorio entre {lower} y {upper}: {number}")
+
+
 @bot.command(name="restar-puntos", description="Resta puntos a un usuario")
 async def restar_puntos(ctx: discord.ApplicationContext, username: str, points_to_subtract: int):
     print(f"[Restar puntos] {ctx.user}: {username}, {points_to_subtract}")
