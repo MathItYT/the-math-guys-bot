@@ -169,16 +169,11 @@ class CodeApprovalUI(discord.ui.View):
         try:
             process = subprocess.Popen(["python", "-c", self.code], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
             out_message = await interaction.channel.send("Output:")
-            for _ in iter(process.stdout.readline, b""):
-                all_lines = process.stdout.read().decode("utf-8")
-                out = "```\n" + all_lines + "\n```"
-                await out_message.edit(content=out)
-            if process.stderr.read() != b"":
-                err_message = await interaction.channel.send("Error:")
-                for _ in iter(process.stderr.readline, b""):
-                    all_lines = process.stderr.read().decode("utf-8")
-                    err = "```\n" + all_lines + "\n```"
-                    await err_message.edit(content=err)
+            while process.poll() is None:
+                out, _ = process.communicate()
+                await out_message.edit(content=f"Output:\n```\n{out.decode()}\n```")
+            if process.stderr.read() != b'':
+                await interaction.channel.send("Error:\n```\n" + process.stderr.read().decode() + "\n```")
         except Exception as e:
             await interaction.channel.send(f"Error: {e}")
         finally:
