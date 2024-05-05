@@ -169,7 +169,7 @@ class CodeApprovalUI(discord.ui.View):
         try:
             process = subprocess.Popen(["python", "-c", self.code], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
             out_message = await interaction.channel.send("Output:")
-            output = None
+            output = ""
             while process.poll() is None:
                 output += process.stdout.read().decode("utf-8")
                 await out_message.edit(content=f"Output:\n```\n{output}\n```")
