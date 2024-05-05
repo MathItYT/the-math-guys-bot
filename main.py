@@ -7,6 +7,7 @@ from the_math_guys_bot.bounties_db import setup_users, add_points, subtract_poin
 import matplotlib.pyplot as plt
 from the_math_guys_bot.random_problem_set import random_problem_set
 import discord
+import random
 
 
 load_dotenv()
@@ -121,6 +122,16 @@ async def puntos(ctx: discord.ApplicationContext, username: str):
     user = ctx.guild.get_member_named(username)
     points = get_points(user)
     await ctx.followup.send(f"{username} tiene {points} puntos.")
+
+
+@bot.command(name="usuario-aleatorio", description="Muestra un usuario aleatorio del servidor")
+async def usuario_aleatorio(ctx: discord.ApplicationContext):
+    print(f"[Usuario aleatorio] {ctx.user}")
+    await ctx.response.defer()
+    members = ctx.guild.members
+    random_member = members[random.randint(0, len(members) - 1)]
+    random_member = random_member.name
+    await ctx.followup.send(f"Usuario aleatorio: {random_member}")
 
 
 @bot.command(name="ranking", description="Muestra el ranking de puntos")
