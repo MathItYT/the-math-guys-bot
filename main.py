@@ -7,7 +7,6 @@ from the_math_guys_bot.bounties_db import setup_users, add_points, subtract_poin
 import matplotlib.pyplot as plt
 import discord
 import random
-import subprocess
 
 
 load_dotenv()
@@ -19,45 +18,6 @@ MATHLIKE_ID: Final[int] = 546393436668952663
 
 bot: discord.Bot = discord.Bot(description="Soy propiedad de The Math Guys :)", intents=discord.Intents.all())
 connections = {}
-
-
-class CodeApprovalUI(discord.ui.View):
-    def __init__(self, code: str):
-        if not code.startswith("```py\n") or not code.endswith("\n```"):
-            raise ValueError("El código debe estar como un bloque de código de Python en Markdown, y resaltado con `py`.")
-        self.code = code.split("```py\n")[1].split("\n```")[0]
-        super().__init__()
-
-    @discord.ui.button(label="Approve", style=discord.ButtonStyle.green)
-    async def approve(self, button: discord.ui.Button, interaction: discord.Interaction):
-        await interaction.response.send_message("Approved! Running code...", ephemeral=True)
-        await interaction.followup.send("Running code...")
-        with open("temp.py", "w") as f:
-            f.write(self.code)
-        try:
-            # Run the code and get live output
-            process = subprocess.Popen(["python", "temp.py"], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-            await interaction.followup.send("Output:")
-            for _ in iter(process.stdout.readline, b""):
-                all_lines = process.stdout.readlines()
-                all_lines = [line.decode("utf-8") for line in all_lines]
-                out = "\n".join(all_lines)
-                await interaction.followup.edit(content=f"Output:\n```\n{out}\n```")
-            for _ in iter(process.stderr.readline, b""):
-                all_lines = process.stderr.readlines()
-                all_lines = [line.decode("utf-8") for line in all_lines]
-                err = "\n".join(all_lines)
-                await interaction.followup.edit(content=f"Output:\n```\n{err}\n```")
-        except Exception as e:
-            await interaction.followup.send(f"Error: {e}")
-        finally:
-            os.remove("temp.py")
-            self.stop()
-
-    @discord.ui.button(label="Deny", style=discord.ButtonStyle.red)
-    async def deny(self, button: discord.ui.Button, interaction: discord.Interaction):
-        await interaction.response.send_message("Denied!", ephemeral=True)
-        self.stop()
 
 
 @bot.event
@@ -164,19 +124,6 @@ async def intercambiar_puntos(ctx: discord.ApplicationContext, username1: str, u
     points1 = get_points(user1)
     points2 = get_points(user2)
     await ctx.followup.send(f"Se han intercambiado {points} puntos entre {username1} y {username2}. Ahora {username1} tiene {points1} puntos y {username2} tiene {points2} puntos.")
-
-
-@bot.command(name="python", description="Ejecuta código de Python")
-# Don't use `code: str` as a parameter, instead read the code from the message content
-async def python(ctx: discord.ApplicationContext):
-    code = ctx.message.content
-    print(f"[Python] {ctx.user}: {code}")
-    try:
-        view = CodeApprovalUI(code)
-        await ctx.response.send_message("Do you approve this code?", view=view)
-    except ValueError as e:
-        await ctx.response.send_message(f"Error: {e}")
-        return
 
 
 @bot.command(name="graficar", description="Grafica una función")

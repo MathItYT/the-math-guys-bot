@@ -1,10 +1,12 @@
 from discord import Message
+import discord
 from the_math_guys_bot.bounties_db import subtract_points, get_points
 from typing import Final, Optional
 import google.generativeai as genai
 import google.ai.generativelanguage as glm
 import os
 from dotenv import load_dotenv
+import subprocess
 
 
 load_dotenv()
@@ -151,6 +153,49 @@ chat = model.start_chat(history=[
     }
 ])
 
+
+class CodeApprovalUI(discord.ui.View):
+    def __init__(self, code: str):
+        self.code = code.split("```py\n")[1].split("\n```")[0]
+        super().__init__()
+
+    @discord.ui.button(label="Approve", style=discord.ButtonStyle.green)
+    async def approve(self, button: discord.ui.Button, interaction: discord.Interaction):
+        if interaction.user.id != MATHLIKE_USER_ID:
+            await interaction.response.send_message("Solo MathLike puede aceptar este código.", ephemeral=True)
+            return
+        await interaction.response.send_message("Approved! Running code...", ephemeral=True)
+        await interaction.followup.send("Running code...")
+        with open("temp.py", "w") as f:
+            f.write(self.code)
+        try:
+            process = subprocess.Popen(["python", "temp.py"], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+            await interaction.followup.send("Output:")
+            for _ in iter(process.stdout.readline, b""):
+                all_lines = process.stdout.readlines()
+                all_lines = [line.decode("utf-8") for line in all_lines]
+                out = "\n".join(all_lines)
+                await interaction.followup.edit(content=f"Output:\n```\n{out}\n```")
+            for _ in iter(process.stderr.readline, b""):
+                all_lines = process.stderr.readlines()
+                all_lines = [line.decode("utf-8") for line in all_lines]
+                err = "\n".join(all_lines)
+                await interaction.followup.edit(content=f"Output:\n```\n{err}\n```")
+        except Exception as e:
+            await interaction.followup.send(f"Error: {e}")
+        finally:
+            os.remove("temp.py")
+            self.stop()
+
+    @discord.ui.button(label="Deny", style=discord.ButtonStyle.red)
+    async def deny(self, button: discord.ui.Button, interaction: discord.Interaction):
+        if interaction.user.id != MATHLIKE_USER_ID:
+            await interaction.response.send_message("Solo MathLike puede rechazar este código.", ephemeral=True)
+            return
+        await interaction.response.send_message("Denied!", ephemeral=True)
+        self.stop()
+
+
 def to_markdown(text: str) -> str:
     text = text.replace('•', '  *')
     return text
@@ -192,6 +237,12 @@ def generate_response(message: str, image: Optional[bytes], mime_type: Optional[
 
 async def handle_message(message: Message) -> None:
     if BOT_USER_ID not in [user.id for user in message.mentions]:
+        return
+    if message.author.bot:
+        return
+    if message.content.startswith("```py\n") and message.content.endswith("\n```"):
+        view = CodeApprovalUI(message.content)
+        await message.channel.send("¿Deseas aprobar o rechazar este código?", view=view)
         return
     image, mime_type = await save_image(message)
     response: str = generate_response(message.content.replace(f"<@{BOT_USER_ID}>", ""), image, mime_type)
