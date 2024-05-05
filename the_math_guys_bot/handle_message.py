@@ -166,10 +166,8 @@ class CodeApprovalUI(discord.ui.View):
             return
         await interaction.response.send_message("Approved! Running code...", ephemeral=True)
         await interaction.followup.send("Running code...")
-        with open("temp.py", "w") as f:
-            f.write(self.code)
         try:
-            process = subprocess.Popen(["python", "temp.py"], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+            process = subprocess.Popen(["python", "-c", self.code], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
             out_message = await interaction.channel.send("Output:")
             for _ in iter(process.stdout.readline, b""):
                 all_lines = process.stdout.read().decode("utf-8")
@@ -184,7 +182,6 @@ class CodeApprovalUI(discord.ui.View):
         except Exception as e:
             await interaction.channel.send(f"Error: {e}")
         finally:
-            os.remove("temp.py")
             self.stop()
 
     @discord.ui.button(label="Deny", style=discord.ButtonStyle.red)
