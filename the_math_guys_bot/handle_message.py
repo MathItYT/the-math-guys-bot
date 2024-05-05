@@ -154,6 +154,14 @@ chat = model.start_chat(history=[
 ])
 
 
+def stream_process(process: subprocess.Popen) -> tuple[str, int | None]:
+    go = process.poll()
+    lines = []
+    for line in process.stdout:
+        lines.append(line.decode("utf-8"))
+    return "".join(lines), go
+
+
 class CodeApprovalUI(discord.ui.View):
     def __init__(self, code: str):
         self.code = code.removeprefix("```py\n").removesuffix("\n```")
@@ -169,16 +177,13 @@ class CodeApprovalUI(discord.ui.View):
         try:
             process = subprocess.Popen(["python", "-c", self.code], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
             out_message = await interaction.channel.send("Output:")
-            output = ""
-            while process.poll() is None:
-                output += process.stdout.read().decode("utf-8")
-                await out_message.edit(content=f"Output:\n```\n{output}\n```")
-            if process.stdout.read():
-                output += process.stdout.read().decode("utf-8")
-                await out_message.edit(content=f"Output:\n```\n{output}\n```")
-            if process.stderr.read():
-                output += process.stderr.read().decode("utf-8")
-                await out_message.edit(content=f"Output:\n```\n{output}\n```")
+            while True:
+                out, go = stream_process(process)
+                await out_message.edit(content="Output:\n```\n" + out + "\n```")
+                if go is not None:
+                    break
+            if process.stderr:
+                await interaction.channel.send("Error:\n```\n" + process.stderr.read().decode("utf-8") + "\n```")
         except Exception as e:
             await interaction.channel.send(f"Error: {e}")
         finally:
