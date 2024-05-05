@@ -173,7 +173,6 @@ class CodeApprovalUI(discord.ui.View):
             await interaction.response.send_message("Solo MathLike puede aceptar este código.", ephemeral=True)
             return
         await interaction.channel.send("Approved! The code will be executed.")
-        await interaction.followup.send("Running code...")
         await interaction.message.delete()
         try:
             process = subprocess.Popen(["python", "-c", self.code], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
@@ -198,7 +197,6 @@ class CodeApprovalUI(discord.ui.View):
             await interaction.response.send_message("Solo MathLike puede rechazar este código.", ephemeral=True)
             return
         await interaction.channel.send("Denied! The code will not be executed.")
-        await interaction.followup.send("The code was not executed.")
         await interaction.message.delete()
         self.stop()
 
