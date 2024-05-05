@@ -197,9 +197,12 @@ async def handle_message(message: Message) -> None:
     response: str = generate_response(message.content.replace(f"<@{BOT_USER_ID}>", ""), image, mime_type)
     roles = [role.name for role in message.author.roles]
     if "Server Booster" not in roles and message.author.id != MATHLIKE_USER_ID:
-        subtract_points(message.author, 10)
-        points = get_points(message.author)
-        response = f"{message.author.mention} {response}\n\nHas canjeado 10 puntos. Ahora tienes {points} puntos. Si no quieres perder puntos, hazte booster del servidor."
+        if get_points(message.author) < 10:
+            response = f"{message.author.mention} No tienes suficientes puntos para canjear esta respuesta. Si no quieres perder puntos, hazte booster del servidor."
+        else:
+            subtract_points(message.author, 10)
+            points = get_points(message.author)
+            response = f"{message.author.mention} {response}\n\nHas canjeado 10 puntos. Ahora tienes {points} puntos. Si no quieres perder puntos, hazte booster del servidor."
     else:
         response = f"{message.author.mention} {response}"
     await message.channel.send(response)
