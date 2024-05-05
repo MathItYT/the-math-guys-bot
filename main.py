@@ -7,6 +7,7 @@ from the_math_guys_bot.bounties_db import setup_users, add_points, subtract_poin
 import matplotlib.pyplot as plt
 import discord
 import random
+import subprocess
 
 
 load_dotenv()
@@ -14,21 +15,49 @@ DISCORD_TOKEN: Final[str] = os.getenv("DISCORD_TOKEN")
 OPENAI_TOKEN: Final[str] = os.getenv("OPENAI_TOKEN")
 GENERAL_ID: Final[int] = 1045453709221568535
 SERVER_ID: Final[int] = 1045453708642758657
-EMOJI_MAP: Final[dict[int, str]] = {
-    1: "1️⃣",
-    2: "2️⃣",
-    3: "3️⃣",
-    4: "4️⃣",
-    5: "5️⃣",
-    6: "6️⃣",
-    7: "7️⃣",
-    8: "8️⃣",
-    9: "9️⃣"
-}
 MATHLIKE_ID: Final[int] = 546393436668952663
 
 bot: discord.Bot = discord.Bot(description="Soy propiedad de The Math Guys :)", intents=discord.Intents.all())
 connections = {}
+
+
+class CodeApprovalUI(discord.ui.View):
+    def __init__(self, code: str):
+        if not code.startswith("```py\n") or not code.endswith("\n```"):
+            raise ValueError("El código debe estar como un bloque de código de Python en Markdown, y resaltado con `py`.")
+        self.code = code.split("```py\n")[1].split("\n```")[0]
+        super().__init__()
+
+    @discord.ui.button(label="Approve", style=discord.ButtonStyle.green)
+    async def approve(self, button: discord.ui.Button, interaction: discord.Interaction):
+        await interaction.response.send_message("Approved! Running code...", ephemeral=True)
+        await interaction.followup.send("Running code...")
+        with open("temp.py", "w") as f:
+            f.write(self.code)
+        try:
+            # Run the code and get live output
+            process = subprocess.Popen(["python", "temp.py"], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+            await interaction.followup.send("Output:")
+            for _ in iter(process.stdout.readline, b""):
+                all_lines = process.stdout.readlines()
+                all_lines = [line.decode("utf-8") for line in all_lines]
+                out = "\n".join(all_lines)
+                await interaction.followup.edit(content=f"Output:\n```\n{out}\n```")
+            for _ in iter(process.stderr.readline, b""):
+                all_lines = process.stderr.readlines()
+                all_lines = [line.decode("utf-8") for line in all_lines]
+                err = "\n".join(all_lines)
+                await interaction.followup.edit(content=f"Output:\n```\n{err}\n```")
+        except Exception as e:
+            await interaction.followup.send(f"Error: {e}")
+        finally:
+            os.remove("temp.py")
+            self.stop()
+
+    @discord.ui.button(label="Deny", style=discord.ButtonStyle.red)
+    async def deny(self, button: discord.ui.Button, interaction: discord.Interaction):
+        await interaction.response.send_message("Denied!", ephemeral=True)
+        self.stop()
 
 
 @bot.event
@@ -56,36 +85,6 @@ async def on_member_join(member: discord.Member):
     general = bot.get_channel(GENERAL_ID)
     await general.send(f"¡Bienvenido {member}! Acá hay muchos aficionados a las matemáticas, computación, física, etc. ¡Esperamos que te sientas como en casa! :)")
     setup_users(member.guild)
-
-
-@bot.event
-async def on_raw_reaction_add(payload: discord.RawReactionActionEvent):
-    if payload.member.bot:
-        return
-    message_id: int = payload.message_id
-    if message_id not in [int(line) for line in open("polls_ids.txt", "r").readlines()]:
-        return
-    message: discord.Message = await bot.get_channel(payload.channel_id).fetch_message(message_id)
-    if not message.embeds:
-        return
-
-    member_reactions: int = 0
-    
-    for reaction in message.reactions:
-        async for user in reaction.users():
-            if user.id == payload.user_id:
-                member_reactions += 1
-    if member_reactions > 1:
-        await message.remove_reaction(payload.emoji, payload.member)
-        await payload.member.send("Solo puedes reaccionar una vez por encuesta.")
-        return
-    
-    embed: discord.Embed = message.embeds[0]
-    options_number: int = len(embed.description.split("\n\n")[1].split("\n"))
-    if payload.emoji.name in list(EMOJI_MAP.values())[:options_number]:
-        return
-    await message.remove_reaction(payload.emoji, payload.member)
-    await payload.member.send("Por favor, reacciona con un emoji válido.")
 
 
 @bot.command(name="sumar-puntos", description="Suma puntos a un usuario")
@@ -165,6 +164,17 @@ async def intercambiar_puntos(ctx: discord.ApplicationContext, username1: str, u
     points1 = get_points(user1)
     points2 = get_points(user2)
     await ctx.followup.send(f"Se han intercambiado {points} puntos entre {username1} y {username2}. Ahora {username1} tiene {points1} puntos y {username2} tiene {points2} puntos.")
+
+
+@bot.command(name="python", description="Ejecuta código de Python")
+async def python(ctx: discord.ApplicationContext, code: str):
+    print(f"[Python] {ctx.user}: {code}")
+    try:
+        view = CodeApprovalUI(code)
+        await ctx.response.send_message("Do you approve this code?", view=view)
+    except ValueError as e:
+        await ctx.response.send_message(f"Error: {e}")
+        return
 
 
 @bot.command(name="graficar", description="Grafica una función")
