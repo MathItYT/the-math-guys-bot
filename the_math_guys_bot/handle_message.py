@@ -236,8 +236,8 @@ class CodeApprovalUI(discord.ui.View):
                     await interaction.channel.send(file=discord.File(f_, f.split("/")[-1]))
             shutil.rmtree(media_videos)
             shutil.rmtree(media_images)
-            self.stop()    
-        
+            self.stop()
+
     async def run_code(self, interaction: discord.Interaction):
         try:
             process = subprocess.Popen(["python", "-c", self.code], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
@@ -257,7 +257,7 @@ class CodeApprovalUI(discord.ui.View):
             elif err:
                 await interaction.channel.send("Error: Error not shown because it is too long.")
         except Exception as e:
-            await interaction.channel.send(f"Error: {e}")
+            raise e
         finally:
             self.stop()
 
