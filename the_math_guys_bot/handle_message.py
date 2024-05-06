@@ -212,12 +212,18 @@ class CodeApprovalUI(discord.ui.View):
             out_message = await interaction.channel.send("Output:")
             while True:
                 out, go = stream_process(process)
-                await out_message.edit(content="Output:\n```\n" + out + "\n```")
+                if len(out) > 1000:
+                    message = "The output is too long."
+                    await out_message.edit(content=message)
+                else:
+                    await out_message.edit(content="Output:\n```\n" + out + "\n```")
                 if go is not None:
                     break
             err = process.stderr.read().decode("utf-8")
-            if err:
+            if err and len(err) < 1000:
                 await interaction.channel.send("Error:\n```\n" + err + "\n```")
+            elif err:
+                await interaction.channel.send("Error: Error not shown because it is too long.")
         except Exception as e:
             await interaction.channel.send(f"Error: {e}")
         finally:
@@ -238,12 +244,18 @@ class CodeApprovalUI(discord.ui.View):
             out_message = await interaction.channel.send("Output:")
             while True:
                 out, go = stream_process(process)
-                await out_message.edit(content="Output:\n```\n" + out + "\n```")
+                if len(out) > 1000:
+                    message = "The output is too long."
+                    await out_message.edit(content=message)
+                else:
+                    await out_message.edit(content="Output:\n```\n" + out + "\n```")
                 if go is not None:
                     break
                 err = process.stderr.read().decode("utf-8")
-            if err:
+            if err and len(err) < 1000:
                 await interaction.channel.send("Error:\n```\n" + err + "\n```")
+            elif err:
+                await interaction.channel.send("Error: Error not shown because it is too long.")
         except Exception as e:
             await interaction.channel.send(f"Error: {e}")
         finally:
