@@ -155,8 +155,8 @@ chat = model.start_chat(history=[
     }
 ])
 
-# It must include scene name
-MANIM_REGEX = re.compile(r"# manim: (?P<scene_name>) (?P<scene_args>.*)")
+# It must include scene name and scene arguments if any
+MANIM_REGEX = re.compile(r"# manim: (?P<scene_name>\w+)( (?P<scene_args>.*))?")
 
 def stream_process(process: subprocess.Popen) -> tuple[str, int | None]:
     go = process.poll()
@@ -230,8 +230,7 @@ class CodeApprovalUI(discord.ui.View):
                 await interaction.channel.send(file=discord.File(f))
             shutil.rmtree(media_videos)
             shutil.rmtree(media_images)
-            self.stop()
-            
+            self.stop()    
         
     async def run_code(self, interaction: discord.Interaction):
         try:
