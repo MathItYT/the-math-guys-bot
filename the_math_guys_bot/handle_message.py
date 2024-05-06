@@ -208,7 +208,7 @@ class CodeApprovalUI(discord.ui.View):
                     scene_args.remove("-p")
                 while "--preview" in scene_args:
                     scene_args.remove("--preview")
-            process = subprocess.Popen(["manim", "manim_temp.py", scene_name, scene_args], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+            process = subprocess.Popen(["manim", "manim_temp.py", scene_name, *scene_args], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
             out_message = await interaction.channel.send("Output:")
             while True:
                 out, go = stream_process(process)
