@@ -7,6 +7,8 @@ import google.ai.generativelanguage as glm
 import os
 from dotenv import load_dotenv
 import subprocess
+import shutil
+import re
 
 
 load_dotenv()
@@ -153,6 +155,8 @@ chat = model.start_chat(history=[
     }
 ])
 
+# It must include scene name
+MANIM_REGEX = re.compile(r"# manim: (?P<scene_name>) (?P<scene_args>.*)")
 
 def stream_process(process: subprocess.Popen) -> tuple[str, int | None]:
     go = process.poll()
@@ -160,6 +164,19 @@ def stream_process(process: subprocess.Popen) -> tuple[str, int | None]:
     for line in process.stdout:
         lines.append(line.decode("utf-8"))
     return "".join(lines), go
+
+
+def get_media_recursive(directory: str) -> list[str]:
+    result = []
+    for root, _, files in os.walk(directory):
+        for f in files:
+            f_now = os.path.join(root, f)
+            if os.path.isdir(f_now):
+                result += get_media_recursive(f_now)
+                continue
+            if f_now.endswith(".mp4") or f_now.endswith(".png") or f_now.endswith(".jpg") or f_now.endswith(".jpeg") or f_now.endswith(".gif"):
+                result.append(f_now)
+    return result
 
 
 class CodeApprovalUI(discord.ui.View):
@@ -174,6 +191,49 @@ class CodeApprovalUI(discord.ui.View):
             return
         await interaction.channel.send("Approved! The code will be executed.")
         await interaction.message.delete()
+        first_line = self.code.split("\n")[0]
+        match = MANIM_REGEX.match(first_line)
+        if not match:
+            await self.run_code(interaction)
+            return
+        await self.run_manim(interaction, match.group("scene_name"), match.group("scene_args"))
+    
+    async def run_manim(self, interaction: discord.Interaction, scene_name: str, scene_args: str):
+        with open("manim_temp.py", "w") as f:
+            f.write(self.code)
+        try:
+            scene_args = scene_args.split(" ")
+            if "-p" in scene_args or "--preview" in scene_args:
+                while "-p" in scene_args:
+                    scene_args.remove("-p")
+                while "--preview" in scene_args:
+                    scene_args.remove("--preview")
+            process = subprocess.Popen(["manim", "manim_temp.py", scene_name, scene_args], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+            out_message = await interaction.channel.send("Output:")
+            while True:
+                out, go = stream_process(process)
+                await out_message.edit(content="Output:\n```\n" + out + "\n```")
+                if go is not None:
+                    break
+                err = process.stderr.read().decode("utf-8")
+                if err:
+                    await interaction.channel.send("Error:\n```\n" + err + "\n```")
+                    break
+        except Exception as e:
+            await interaction.channel.send(f"Error: {e}")
+        finally:
+            os.remove("manim_temp.py")
+            media_videos = "media/videos"
+            media_images = "media/images"
+            files = get_media_recursive(media_videos) + get_media_recursive(media_images)
+            for f in files:
+                await interaction.channel.send(file=discord.File(f))
+            shutil.rmtree(media_videos)
+            shutil.rmtree(media_images)
+            self.stop()
+            
+        
+    async def run_code(self, interaction: discord.Interaction):
         try:
             process = subprocess.Popen(["python", "-c", self.code], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
             out_message = await interaction.channel.send("Output:")
