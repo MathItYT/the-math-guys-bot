@@ -251,7 +251,7 @@ class CodeApprovalUI(discord.ui.View):
                     await out_message.edit(content="Output:\n```\n" + out + "\n```")
                 if go is not None:
                     break
-                err = process.stderr.read().decode("utf-8")
+            err = process.stderr.read().decode("utf-8")
             if err and len(err) < 1000:
                 await interaction.channel.send("Error:\n```\n" + err + "\n```")
             elif err:
