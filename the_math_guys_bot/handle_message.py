@@ -215,10 +215,9 @@ class CodeApprovalUI(discord.ui.View):
                 await out_message.edit(content="Output:\n```\n" + out + "\n```")
                 if go is not None:
                     break
-                err = process.stderr.read().decode("utf-8")
-                if err:
-                    await interaction.channel.send("Error:\n```\n" + err + "\n```")
-                    break
+            err = process.stderr.read().decode("utf-8")
+            if err:
+                await interaction.channel.send("Error:\n```\n" + err + "\n```")
         except Exception as e:
             await interaction.channel.send(f"Error: {e}")
         finally:
@@ -227,7 +226,8 @@ class CodeApprovalUI(discord.ui.View):
             media_images = "media/images"
             files = get_media_recursive(media_videos) + get_media_recursive(media_images)
             for f in files:
-                await interaction.channel.send(file=discord.File(f))
+                with open(f, "rb") as f_:
+                    await interaction.channel.send(file=discord.File(f_, f.split("/")[-1]))
             shutil.rmtree(media_videos)
             shutil.rmtree(media_images)
             self.stop()    
@@ -242,9 +242,8 @@ class CodeApprovalUI(discord.ui.View):
                 if go is not None:
                     break
                 err = process.stderr.read().decode("utf-8")
-                if err:
-                    await interaction.channel.send("Error:\n```\n" + err + "\n```")
-                    break
+            if err:
+                await interaction.channel.send("Error:\n```\n" + err + "\n```")
         except Exception as e:
             await interaction.channel.send(f"Error: {e}")
         finally:
