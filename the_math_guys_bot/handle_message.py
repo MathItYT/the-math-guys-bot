@@ -257,7 +257,7 @@ class CodeApprovalUI(discord.ui.View):
             elif err:
                 await interaction.channel.send("Error: Error not shown because it is too long.")
         except Exception as e:
-            raise e
+            await interaction.channel.send(f"Error: {e}")
         finally:
             self.stop()
 
