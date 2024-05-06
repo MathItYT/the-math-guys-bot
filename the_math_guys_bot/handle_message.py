@@ -232,7 +232,7 @@ class CodeApprovalUI(discord.ui.View):
             media_images = "media/images"
             files = get_media_recursive(media_videos) + get_media_recursive(media_images)
             for f in files:
-                if f.split("/")[-1].split(".")[0] != scene_name:
+                if f.split("/")[-1].split(".")[0] != scene_name and f.split("/")[-1].split(".")[0] != f"{scene_name}_ManimCE_v0.18.1":
                     continue
                 with open(f, "rb") as f_:
                     await interaction.channel.send(file=discord.File(f_, f.split("/")[-1]))
