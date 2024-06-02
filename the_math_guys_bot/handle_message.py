@@ -21,9 +21,7 @@ CONTEXT: Final[str] = "Contexto: Tu nombre es TheMathGuysBot y eres un bot de Di
                       "Además, eres profesor de matemáticas y ayudas a los " \
                       "miembros del servidor con sus dudas matemáticas, de computación o física, " \
                       "activando su pensamiento crítico y resolviendo de forma interactiva " \
-                      "los problemas que te plantean. Cada vez que te hablen, tendrás primero " \
-                      "el identificador del usuario que te habla, seguido de dos puntos, un espacio " \
-                      "y luego el mensaje que te envían."
+                      "los problemas que te plantean."
 
 MATHLIKE_USER_ID: Final[int] = 546393436668952663
 BOT_USER_ID: Final[int] = 1194231765175369788
@@ -197,5 +195,5 @@ async def handle_message(message: Message) -> None:
     if BOT_USER_ID not in [user.id for user in message.mentions]:
         return
     images = await get_images(message)
-    response = generate_response(f"{message.author.mention}: {message.content}", images)
+    response = generate_response(message.content, images)
     await message.channel.send(response)
