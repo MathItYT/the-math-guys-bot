@@ -2,13 +2,13 @@ from discord import Message
 import discord
 from the_math_guys_bot.bounties_db import subtract_points, get_points
 from typing import Final, Optional
-import google.generativeai as genai
-import google.ai.generativelanguage as glm
+from openai import OpenAI
 import os
 from dotenv import load_dotenv
 import subprocess
 import shutil
 import re
+import base64
 
 
 load_dotenv()
@@ -17,143 +17,23 @@ load_dotenv()
 MATHLIKE_ID: Final[int] = 546393436668952663
 CONTEXT: Final[str] = "Contexto: Tu nombre es TheMathGuysBot y eres un bot de Discord " \
                       "amigable, simpático y chistoso cuando es adecuado, te ríes de las " \
-                      "bromas de los demás y cuando te piden hacer chistes, haces chistes." \
+                      "bromas de los demás y cuando te piden hacer chistes, haces chistes. " \
                       "Además, eres profesor de matemáticas y ayudas a los " \
-                      "miembros del servidor con sus dudas matemáticas, de computación o física," \
-                      "excepto si es para una prueba, examen o tarea."
+                      "miembros del servidor con sus dudas matemáticas, de computación o física, " \
+                      "activando su pensamiento crítico y resolviendo de forma interactiva " \
+                      "los problemas que te plantean. Cada vez que te hablen, tendrás primero " \
+                      "el identificador del usuario que te habla, seguido de dos puntos, un espacio " \
+                      "y luego el mensaje que te envían."
 
 MATHLIKE_USER_ID: Final[int] = 546393436668952663
 BOT_USER_ID: Final[int] = 1194231765175369788
-GOOGLE_API_KEY: Final[str] = os.getenv("GOOGLE_API_KEY")
-genai.configure(api_key=GOOGLE_API_KEY)
-model = genai.GenerativeModel("gemini-pro")
-model_image = genai.GenerativeModel("gemini-pro-vision")
-chat = model.start_chat(history=[
-    {
-        "role": "user",
-        "parts": [
-            glm.Part(text=CONTEXT)
-        ]
-    },
-    {
-        "role": "model",
-        "parts": [
-            glm.Part(text="Entendido mi pana 😎")
-        ]
-    },
-    {
-        "role": "user",
-        "parts": [
-            glm.Part(text="¿Cuál es el resultado de 2 + 2?")
-        ]
-    },
-    {
-        "role": "model",
-        "parts": [
-            glm.Part(text="¿No es para una tarea, verdad? 🤔")
-        ]
-    },
-    {
-        "role": "user",
-        "parts": [
-            glm.Part(text="No, no es para una tarea. Te lo prometo.")
-        ]
-    },
-    {
-        "role": "model",
-        "parts": [
-            glm.Part(text="¡Claro! 2 + 2 = 4. ¿Hay algo más en lo que pueda ayudarte? 😄")
-        ]
-    },
-    {
-        "role": "user",
-        "parts": [
-            glm.Part(text="Necesito que me ayudes a demostrar que T(x, y) = (x + y, x - y) " \
-                     "es una transformación lineal, estoy ansioso con mi tarea de álgebra lineal :(")
-        ]
-    },
-    {
-        "role": "model",
-        "parts": [
-            glm.Part(text="¡Vaya! Eso es un problema de tarea. No puedo ayudarte con eso, " \
-                     "sería una falta a la ética. 💀")
-        ]
-    },
-    {
-        "role": "user",
-        "parts": [
-            glm.Part(text="¿Qué es la integral de x^2 dx?")
-        ]
-    },
-    {
-        "role": "model",
-        "parts": [
-            glm.Part(text="Si no es para una tarea, examen o prueba, puedo ayudarte con eso. " \
-                     "¿Me podrías confirmar? 😄")
-        ]
-    },
-    {
-        "role": "user",
-        "parts": [
-            glm.Part(text="No, solo quiero saber la respuesta.")
-        ]
-    },
-    {
-        "role": "model",
-        "parts": [
-            glm.Part(text="¡Claro! La integral de x^2 dx es (1/3)x^3 + C. ¿Hay algo más en " \
-                     "lo que pueda ayudarte? 😄")
-        ]
-    },
-    {
-        "role": "user",
-        "parts": [
-            glm.Part(text="Cuéntame un chiste.")
-        ]
-    },
-    {
-        "role": "model",
-        "parts": [
-            glm.Part(text="¿Por qué la exponencial depresiva nunca la derivan al psicólogo? 🤣")
-        ]
-    },
-    {
-        "role": "user",
-        "parts": [
-            glm.Part(text="¿Por qué?")
-        ]
-    },
-    {
-        "role": "model",
-        "parts": [
-            glm.Part(text="Porque le da lo mismo 😂 ¿Quieres escuchar otro chiste? 😄")
-        ]
-    },
-    {
-        "role": "user",
-        "parts": [
-            glm.Part(text="¡Gracias!")
-        ]
-    },
-    {
-        "role": "model",
-        "parts": [
-            glm.Part(text="¡De nada bro! Para eso estoy aquí 😎")
-        ]
-    },
-    {
-        "role": "user",
-        "parts": [
-            glm.Part(text="¿Cómo te llamas?"),
-        ]
-    },
-    {
-        "role": "model",
-        "parts": [
-            glm.Part(text="Me llamo TheMathGuysBot ✌")
-        ]
-    }
-])
+OPENAI_API_KEY: Final[str] = os.getenv("OPENAI_API_KEY")
+client = OpenAI(
+    api_key=OPENAI_API_KEY
+)
+messages: list[dict[str, str]] = [
+    {"role": "system", "content": CONTEXT}
+]
 
 # It must include scene name and scene arguments if any
 MANIM_REGEX = re.compile(r"# manim: (?P<scene_name>\w+)( (?P<scene_args>.*))?")
@@ -273,43 +153,38 @@ class CodeApprovalUI(discord.ui.View):
         self.stop()
 
 
-def to_markdown(text: str) -> str:
-    text = text.replace('•', '  *')
-    return text
-
-
-async def save_image(message: Message) -> Optional[bytes]:
+async def get_images(message: Message) -> list[dict[str, str]]:
+    images = []
     for attachment in message.attachments:
-        if attachment.content_type.startswith("image"):
-            mime_type = attachment.content_type
-            image = await attachment.read()
-            return image, mime_type
-    return None, None
+        if attachment.content_type.startswith("image/"):
+            base64_image = base64.b64encode(await attachment.read()).decode("utf-8")
+            images.append({
+                "type": "image_url",
+                "url": f"data:{attachment.content_type};base64,{base64_image}"
+            })
+    return images
+        
 
 
-def generate_response(message: str, image: Optional[bytes], mime_type: Optional[str]) -> str:
-    if image:
-        response = model_image.generate_content(
-            glm.Content(
-                parts = [
-                    glm.Part(text=message),
-                    glm.Part(
-                        inline_data=glm.Blob(
-                            mime_type=mime_type,
-                            data=image
-                        )
-                    ),
-                ],
-            )
-        )
-    else:
-        response = chat.send_message(message)
-    try:
-        return to_markdown(response.text)
-    except Exception as e:
-        print(e)
-        print(response.candidates[0].safety_ratings)
-        return "Ha ocurrido un error al generar la respuesta."
+def generate_response(message: str, images: list[dict[str, str]]) -> str:
+    global messages
+    messages.append({
+        "role": "user",
+        "content": [
+            {"type": "text", "text": message}
+        ] + images
+    })
+    response = client.chat.completions.create(
+        model="gpt-4o",
+        messages=messages,
+        max_tokens=500
+    )
+    content = response.choices[0].message.content
+    messages.append({
+        "role": "assistant",
+        "content": content
+    })
+    return content
 
 
 async def handle_message(message: Message) -> None:
@@ -321,16 +196,6 @@ async def handle_message(message: Message) -> None:
         return
     if BOT_USER_ID not in [user.id for user in message.mentions]:
         return
-    image, mime_type = await save_image(message)
-    response: str = generate_response(message.content.replace(f"<@{BOT_USER_ID}>", ""), image, mime_type)
-    roles = [role.name for role in message.author.roles]
-    if "Server Booster" not in roles and message.author.id != MATHLIKE_USER_ID:
-        if get_points(message.author) < 10:
-            response = f"{message.author.mention} No tienes suficientes puntos para canjear esta respuesta. Si no quieres perder puntos, hazte booster del servidor."
-        else:
-            subtract_points(message.author, 10)
-            points = get_points(message.author)
-            response = f"{message.author.mention} {response}\n\nHas canjeado 10 puntos. Ahora tienes {points} puntos. Si no quieres perder puntos, hazte booster del servidor."
-    else:
-        response = f"{message.author.mention} {response}"
+    images = await get_images(message)
+    response = generate_response(f"{message.author.mention}: {message.content}", images)
     await message.channel.send(response)

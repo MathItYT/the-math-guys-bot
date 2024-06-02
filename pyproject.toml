@@ -14,6 +14,7 @@ py-cord = {git = "https://github.com/Pycord-Development/pycord.git", branch="mas
 google-generativeai = "^0.5.2"
 antlr4-python3-runtime = "4.11"
 manim = "^0.18.1"
+openai = "^1.30.5"
 
 
 [tool.poetry.group.dev.dependencies]
