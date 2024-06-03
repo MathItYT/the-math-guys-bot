@@ -158,7 +158,7 @@ async def get_images(message: Message) -> list[dict[str, str]]:
             base64_image = base64.b64encode(await attachment.read()).decode("utf-8")
             images.append({
                 "type": "image_url",
-                "url": f"data:{attachment.content_type};base64,{base64_image}"
+                "image_url": {"url": f"data:{attachment.content_type};base64,{base64_image}"}
             })
     return images
         
