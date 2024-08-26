@@ -102,9 +102,10 @@ def clear_user_and_assistant_messages() -> None:
 
 async def handle_message(message: Message) -> None:
     global training_messages, instructions
-    if message.author.bot:
+    if message.author.id == BOT_USER_ID:
         return
     images = await get_images(message)
     response = generate_response(message.content, images, message.author.mention)
     if response:
+        print(f"[TheMathGuysBot]: {response}")
         await message.channel.send(response)
