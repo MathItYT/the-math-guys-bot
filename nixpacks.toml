@@ -1,5 +1,5 @@
 [phases.setup]
-nixPkgs = ['...', 'ffmpeg', 'pkg-config', 'cairo', 'pango', 'gi-pangocairo']
+nixPkgs = ['...', 'ffmpeg', 'pkg-config', 'cairo', 'pango', 'haskellPackages.gi-pangocairo']
 
 [phases.build]
 cmds = ['poetry install']
