@@ -1,5 +1,5 @@
 [phases.setup]
-nixPkgs = ['...', 'ffmpeg', 'pango.pangocairo', 'texlive.combined.scheme-full']
+nixPkgs = ['...', 'ffmpeg', 'cairo', 'pango']
 
 [phases.build]
 cmds = ['poetry install']
