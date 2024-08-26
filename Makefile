@@ -1,3 +1,3 @@
 all:
 	pip3 install -e .
-	python main.py
+	python3 main.py
