@@ -1,0 +1,8 @@
+[phases.setup]
+nixPkgs = ['...', 'cairo', 'pango', 'ffmpeg', 'texlive.combined.scheme-full']
+
+[phases.build]
+cmds = ['poetry install']
+
+[start]
+cmd = 'poetry run python3 main.py'
