@@ -8,10 +8,7 @@ readme = "README.md"
 [tool.poetry.dependencies]
 python = ">=3.9,<3.13"
 python-dotenv = "^1.0.0"
-sympy = "^1.12"
-matplotlib = "^3.8.2"
 py-cord = {git = "https://github.com/Pycord-Development/pycord.git", branch="master"}
-antlr4-python3-runtime = "4.11"
 openai = "^1.30.5"
 
 

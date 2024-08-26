@@ -59,7 +59,7 @@ async def borrar_mensajes(ctx: discord.ApplicationContext):
         await ctx.response.send_message("Solo MathLike puede usar este comando.")
         return
     await ctx.response.defer()
-    await clear_user_and_assistant_messages()
+    clear_user_and_assistant_messages()
     await ctx.followup.send("Historial borrado.")
 
 
