@@ -57,7 +57,6 @@ training_messages: list[dict[str, str]] = [
     {"role": "assistant", "content": ""},
     {"role": "user", "content": f"{example_user} \"¿Quién es el mejor bot de Discord?\""},
     {"role": "assistant", "content": "¡Yo! 😃"},
-    {}
 ]
 
 user_and_assistant_messages: list[dict[str, str]] = []
