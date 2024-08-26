@@ -1,5 +1,6 @@
 .env
 __pycache__
+media
 *.txt
 *.csv
 *.png

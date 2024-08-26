@@ -1,7 +1,7 @@
 from dotenv import load_dotenv
 import os
 from typing import Final
-from the_math_guys_bot.handle_message import handle_message
+from the_math_guys_bot.handle_message import handle_message, clear_user_and_assistant_messages
 from the_math_guys_bot.plot import plot_expression
 from the_math_guys_bot.bounties_db import setup_users, add_points, subtract_points, get_points, get_leaderboard, exchange_points
 import matplotlib.pyplot as plt
@@ -88,6 +88,17 @@ async def puntos(ctx: discord.ApplicationContext, username: str):
     user = ctx.guild.get_member_named(username)
     points = get_points(user)
     await ctx.followup.send(f"{username} tiene {points} puntos.")
+
+
+@bot.command(name="borrar-mensajes", description="Borra el historial")
+async def borrar_mensajes(ctx: discord.ApplicationContext):
+    print(f"[Borrar mensajes] {ctx.user}")
+    if ctx.user.id != MATHLIKE_ID:
+        await ctx.response.send_message("Solo MathLike puede usar este comando.")
+        return
+    await ctx.response.defer()
+    await clear_user_and_assistant_messages()
+    await ctx.followup.send("Historial borrado.")
 
 
 @bot.command(name="usuario-aleatorio", description="Muestra un usuario aleatorio del servidor")
