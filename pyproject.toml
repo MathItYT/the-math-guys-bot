@@ -9,7 +9,9 @@ readme = "README.md"
 python = ">=3.9,<3.13"
 python-dotenv = "^1.0.0"
 py-cord = {git = "https://github.com/Pycord-Development/pycord.git", branch="master"}
-openai = "^1.30.5"
+langchain = "^0.2.14"
+langchain-community = "^0.2.12"
+langchain-ollama = "^0.1.1"
 
 
 [tool.poetry.group.dev.dependencies]
