@@ -1,8 +1,8 @@
 [phases.setup]
 nixPkgs = ['...']
 
-[phases.build]
-cmds = ['pip3 install -e .']
+[phases.install]
+cmds = ['pip3 install virtualenv', 'python3 -m virtualenv .venv', 'source .venv/bin/activate', 'pip3 install -e .']
 
 [start]
 cmd = 'python3 main.py'
