@@ -2,7 +2,7 @@
 nixPkgs = ['...']
 
 [phases.build]
-cmds = ['poetry install']
+cmds = ['pip install -e .']
 
 [start]
-cmd = 'poetry run python3 main.py'
+cmd = 'python3 main.py'
