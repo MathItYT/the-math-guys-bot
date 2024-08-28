@@ -2,7 +2,7 @@
 nixPkgs = ['...']
 
 [phases.build]
-cmds = ['pip install -e .']
+cmds = ['pip3 install -e .']
 
 [start]
 cmd = 'python3 main.py'
