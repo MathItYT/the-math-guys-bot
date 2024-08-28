@@ -11,7 +11,8 @@ python-dotenv = "^1.0.0"
 py-cord = {git = "https://github.com/Pycord-Development/pycord.git", branch="master"}
 langchain = "^0.2.14"
 langchain-community = "^0.2.12"
-langchain-ollama = "^0.1.1"
+langchain-openai = "^0.1.23"
+langchain-core = "^0.2.35"
 
 
 [tool.poetry.group.dev.dependencies]

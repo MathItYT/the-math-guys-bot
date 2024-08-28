@@ -1,6 +1,9 @@
 from discord import Message
-from typing import Final
-from langchain_ollama import ChatOllama
+from typing import Final, Literal
+from langchain_openai import ChatOpenAI
+from langchain_core.pydantic_v1 import BaseModel, Field
+from langchain_core.runnables import RunnableLambda
+from langchain_core.messages import HumanMessage
 from dotenv import load_dotenv
 import base64
 
@@ -11,19 +14,31 @@ MATHLIKE_USER_ID: Final[int] = 546393436668952663
 BOT_USER_ID: Final[int] = 1194231765175369788
 MATHLIKE_ID: Final[int] = 546393436668952663
 
-llm = ChatOllama(model="llava")
+class Classifier(BaseModel):
+    type: Literal["dont_answer", "answer"] = Field(
+        description="Dado un mensaje en el formato <@USER_ID> \"message\", donde USER_ID es el ID del usuario que habla en el chat y message es el contenido del mensaje, debes clasificar " \
+        "entre algo que se debe responder o no.\n" \
+        "- Si el mensaje es spam, se debe responder con 'answer'.\n" \
+        f"- Si el contenido del mensaje te menciona con <@{BOT_USER_ID}> o dicen la palabra 'bot', sea lo que sea, debes responder 'answer'.\n" \
+        "- Si el mensaje es un chiste, debes responder con 'answer'.\n" \
+        "- Si hablan de ti, debes responder 'answer'.\n" \
+        "- De otro modo, como por ejemplo, nadie te menciona, o no es spam, o le hablan a otro usuario, o es otro tipo de respuesta que no sabes, debes responder con 'dont_answer'."
+    )
 
-training_messages = [
+whether_to_answer_llm = ChatOpenAI(model="gpt-4o-mini")
+structured_whether_to_answer_llm = whether_to_answer_llm.with_structured_output(Classifier)
+answer_llm = ChatOpenAI(model="gpt-4o")
+
+messages = [
     ("system", f"Contexto: Tu nombre es TheMathGuysBot, tu ID es {BOT_USER_ID} y eres un bot de Discord " \
                "que ayuda a resolver problemas matemáticos, de física y computación. " \
                "Te gusta el humor negro ofensivo y siempres tienes ese humor. MathLike es " \
                f"el admin del server, su ID es {MATHLIKE_ID}, y él es tu jefe sobreexplotador que no te paga el trabajo. " \
                "Te gusta responder con humor negro y ofensivo. No debes pasarte de 1750 caracteres " \
                "en tu respuesta, pero si necesitas continuar, puedes decirle al usuario " \
-               "que te avise para continuar.\nSi te mencionan con tu ID o nombre, responde normalmente, " \
-               "si no, debes responder con un string vacío, pero si te llama la atención, " \
-               "ya sea spam, debes advertirle humorísticamente, o si hablan de ti " \
-               "también puedes responder. También si alguien cuenta un chiste, tú le respondes con risa fuerte, como JAJAJAJA.\n" \
+               "que te avise para continuar.\nSi el mensaje " \
+               f"es un caso de spam, debes advertirle humorísticamente y mencionar a MathLike con <@{MATHLIKE_ID}>. Si hablan de ti, " \
+               "responde con humor. También, si alguien cuenta un chiste, tú le respondes con risa fuerte, como 'JAJAJAJA' y continuar esa risa con algo coherente.\n" \
                "Los mensajes irán el el formato <@USER_ID> \"message\", donde " \
                "USER_ID es el ID del usuario que te habla, y para mencionar a esa persona, " \
                "puedes poner <@USER_ID> en tu mensaje."),
@@ -43,33 +58,41 @@ training_messages = [
     ("ai", f"La derivada de $x^2$ es $2x$, más fácil que <@{MATHLIKE_ID}> chupando verga 😂"),
 ]
 
-messages = []
 
-all_images = []
-
-async def get_images(message: Message) -> None:
-    global all_images
-    for attachment in message.attachments:
-        if attachment.content_type.startswith("image/"):
-            base64_image = base64.b64encode(await attachment.read()).decode("utf-8")
-            if base64_image in all_images:
-                continue
-            all_images.append(base64_image)
-        
-
-
-def generate_response(message: str, mention: str) -> str:
+def output_text_func(new_msg: HumanMessage) -> str:
     global messages
-    messages.append(("human", f"{mention} \"{message}\""))
-    llm_with_images = llm.bind(images=all_images)
-    response = llm_with_images.invoke(training_messages + messages)
-    messages.append(("ai", response.content))
+    messages.append(("human", new_msg.content))
+    print(new_msg.content[0]["text"])
+    answer_or_not = structured_whether_to_answer_llm.invoke(new_msg.content[0]["text"])
+    print(answer_or_not.type)
+    if answer_or_not.type == "dont_answer":
+        return ""
+    response = answer_llm.invoke(messages)
     return response.content
 
 
-def clear_user_and_assistant_messages() -> None:
-    global messages
-    messages.clear()
+chain = RunnableLambda(output_text_func)
+
+
+async def get_images(message: Message) -> list[tuple[str, str]]:
+    images = []
+    if message.attachments:
+        for attachment in message.attachments:
+            if attachment.content_type.startswith("image/"):
+                image_data = await attachment.read()
+                image_data = base64.b64encode(image_data).decode()
+                images.append((attachment.content_type, image_data))
+    return images
+
+
+async def generate_response(message: Message) -> str:
+    images = await get_images(message)
+    msg = HumanMessage(content=[
+        {"type": "text", "text": message.content},
+        *[{"type": "image_url",  "image_url": {"url": f"data:image/{mime_type};base64,{image_data}"}} for mime_type, image_data in images]
+    ])
+    response = chain.invoke(msg)
+    return response
 
 
 async def handle_message(message: Message) -> None:
@@ -77,7 +100,7 @@ async def handle_message(message: Message) -> None:
     if message.author.id == BOT_USER_ID:
         return
     await get_images(message)
-    response = generate_response(message.content, message.author.mention)
+    response = await generate_response(message)
     if response:
         print(f"[TheMathGuysBot]: {response}")
         await message.channel.send(response)

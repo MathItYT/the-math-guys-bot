@@ -1,7 +1,7 @@
 from dotenv import load_dotenv
 import os
 from typing import Final
-from the_math_guys_bot.handle_message import handle_message, clear_user_and_assistant_messages
+from the_math_guys_bot.handle_message import handle_message
 import discord
 import random
 
@@ -49,17 +49,6 @@ async def numero_aleatorio(ctx: discord.ApplicationContext, lower: int, upper: i
     await ctx.response.defer()
     number = random.randint(lower, upper)
     await ctx.followup.send(f"Número aleatorio entre {lower} y {upper}: {number}")
-
-
-@bot.command(name="borrar-mensajes", description="Borra el historial")
-async def borrar_mensajes(ctx: discord.ApplicationContext):
-    print(f"[Borrar mensajes] {ctx.user}")
-    if ctx.user.id != MATHLIKE_ID:
-        await ctx.response.send_message("Solo MathLike puede usar este comando.")
-        return
-    await ctx.response.defer()
-    clear_user_and_assistant_messages()
-    await ctx.followup.send("Historial borrado.")
 
 
 @bot.command(name="usuario-aleatorio", description="Muestra un usuario aleatorio del servidor")

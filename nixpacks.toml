@@ -2,7 +2,7 @@
 nixPkgs = ['...']
 
 [phases.build]
-cmds = ['curl -fsSL https://ollama.com/install.sh | sh', 'ollama pull llava', 'poetry install']
+cmds = ['poetry install']
 
 [start]
 cmd = 'poetry run python3 main.py'
