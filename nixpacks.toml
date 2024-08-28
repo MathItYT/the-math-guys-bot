@@ -5,4 +5,4 @@ nixPkgs = ['...']
 cmds = ['python3 -m venv .venv', 'source .venv/bin/activate && pip install -e .']
 
 [start]
-cmd = 'source .venv/bin/activate && python3 -m myapp'
+cmd = 'source .venv/bin/activate && python3 main.py'
