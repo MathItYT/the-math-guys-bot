@@ -2,7 +2,7 @@
 nixPkgs = ['...']
 
 [phases.install]
-cmds = ['python3 -m venv .venv', 'source .venv/bin/activate', 'pip3 install -e .']
+cmds = ['python3 -m venv .venv', 'source .venv/bin/activate', 'pip install -e .']
 
 [start]
 cmd = 'python3 main.py'
