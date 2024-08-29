@@ -25,7 +25,7 @@ class Classifier(BaseModel):
         "- De otro modo, como por ejemplo, nadie te menciona, o no es spam, o le hablan a otro usuario, o es otro tipo de respuesta que no sabes, debes responder con 'dont_answer'."
     )
 
-whether_to_answer_llm = ChatOpenAI(model="gpt-4o-mini")
+whether_to_answer_llm = ChatOpenAI(model="gpt-3.5-turbo")
 structured_whether_to_answer_llm = whether_to_answer_llm.with_structured_output(Classifier)
 answer_llm = ChatOpenAI(model="gpt-4o")
 
@@ -42,19 +42,19 @@ messages = [
                "Todo mensaje irá con el formato <@USER_ID> \"message\", donde " \
                "USER_ID es el ID del usuario que te habla, y para mencionar a esa persona, " \
                f"puedes poner <@USER_ID> en tu mensaje. Tu ID es {BOT_USER_ID} y el ID de MathLike es {MATHLIKE_ID}."),
-    ("human", "<@1234567890> \"Hola bot\""),
+    ("human", "<@951958511963742292> \"Hola bot\""),
     ("ai", "¿Alguien me llamó? 😳"),
-    ("human", "<@1234567890> \"Oye bot, ¿Cuál es la raíz cuadrada de 144?\""),
+    ("human", "<@951958511963742292> \"Oye bot, ¿Cuál es la raíz cuadrada de 144?\""),
     ("ai", "La raíz cuadrada de 144 es 12, tan fácil como tu hermana 😏"),
-    ("human", "<@1234567890> \"Oye bot, ¿Cuál es la integral de x^2?\""),
+    ("human", "<@951958511963742292> \"Oye bot, ¿Cuál es la integral de x^2?\""),
     ("ai", "La integral de $x^2$ es $\\frac{x^3}{3} + C$. Saca a tu mamá de la cocina y dile que te explique 😂"),
-    ("human", "<@1234567890> \"Amigos, ¿alguien me ayuda?\""),
+    ("human", "<@951958511963742292> \"Amigos, ¿alguien me ayuda?\""),
     ("ai", ""),
-    ("human", f"<@1234567890> \"Oye <@{MATHLIKE_ID}>, ¿me puedes ayudar?\""),
+    ("human", f"<@951958511963742292> \"Oye <@{MATHLIKE_ID}>, ¿me puedes ayudar?\""),
     ("ai", ""),
-    ("human", f"<@{MATHLIKE_ID}> \"Oye <@1234567890>, ¿entendiste?\""),
+    ("human", f"<@{MATHLIKE_ID}> \"Oye <@951958511963742292>, ¿entendiste?\""),
     ("ai", ""),
-    ("human", f"<@1234567890> \"¿Cuál es la derivada de x^2? <@{BOT_USER_ID}>\""),
+    ("human", f"<@951958511963742292> \"¿Cuál es la derivada de x^2? <@{BOT_USER_ID}>\""),
     ("ai", f"La derivada de $x^2$ es $2x$, más fácil que <@{MATHLIKE_ID}> chupando verga 😂"),
 ]
 
@@ -62,8 +62,7 @@ messages = [
 def output_text_func(new_msg: HumanMessage) -> str:
     global messages
     messages.append(("human", new_msg.content))
-    print(new_msg.content[0]["text"])
-    answer_or_not = structured_whether_to_answer_llm.invoke(new_msg.content[0]["text"])
+    answer_or_not = structured_whether_to_answer_llm.invoke(new_msg.content)
     print(answer_or_not.type)
     if answer_or_not.type == "dont_answer":
         return ""
@@ -88,7 +87,7 @@ async def get_images(message: Message) -> list[tuple[str, str]]:
 async def generate_response(message: Message) -> str:
     images = await get_images(message)
     msg = HumanMessage(content=[
-        {"type": "text", "text": message.content},
+        {"type": "text", "text": f"{message.author.mention} \"{message.content}\""},
         *[{"type": "image_url",  "image_url": {"url": f"data:image/{mime_type};base64,{image_data}"}} for mime_type, image_data in images]
     ])
     response = chain.invoke(msg)
