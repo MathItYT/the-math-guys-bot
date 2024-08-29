@@ -25,7 +25,7 @@ class Classifier(BaseModel):
         "- De otro modo, como por ejemplo, nadie te menciona, o no es spam, o le hablan a otro usuario, o es otro tipo de respuesta que no sabes, debes responder con 'dont_answer'."
     )
 
-whether_to_answer_llm = ChatOpenAI(model="gpt-3.5-turbo")
+whether_to_answer_llm = ChatOpenAI(model="gpt-4o-mini")
 structured_whether_to_answer_llm = whether_to_answer_llm.with_structured_output(Classifier)
 answer_llm = ChatOpenAI(model="gpt-4o")
 
