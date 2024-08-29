@@ -23,6 +23,7 @@ connections = {}
 async def on_ready():
     await bot.change_presence(activity=discord.Game(name="matemáticas"))
     print(f"Logged in as {bot.user}!")
+    update_youtube_videos.start()
 
 
 @bot.event
