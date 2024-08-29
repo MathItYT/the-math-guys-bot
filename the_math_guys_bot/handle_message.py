@@ -62,7 +62,7 @@ messages = [
 def output_text_func(new_msg: HumanMessage) -> str:
     global messages
     messages.append(("human", new_msg.content))
-    answer_or_not = structured_whether_to_answer_llm.invoke(new_msg)
+    answer_or_not = structured_whether_to_answer_llm.invoke([new_msg])
     print(answer_or_not.type)
     if answer_or_not.type == "dont_answer":
         return ""
