@@ -114,5 +114,7 @@ def new_video_message(new_video: dict) -> str:
     discord_id = new_video["discord_id"]
     channel_name = new_video["channel_name"]
     video_title = new_video["video_title"]
-    response = output_text_func(HumanMessage(content=[{"type": "text", "text": f"<@{MATHLIKE_ID}> \"Oye bot, el canal de <@{discord_id}>, llamado {channel_name} subió un nuevo video llamado '{video_title}', necesito que lo anuncies.\""}]))
+    latest_video_id = new_video["latest_video_id"]
+    url = f"https://www.youtube.com/watch?v={latest_video_id}"
+    response = output_text_func(HumanMessage(content=[{"type": "text", "text": f"<@{MATHLIKE_ID}> \"Oye bot, el canal de <@{discord_id}>, llamado {channel_name} subió un nuevo video llamado '{video_title}' y su URL es {url}, necesito que lo anuncies.\""}]))
     return response
