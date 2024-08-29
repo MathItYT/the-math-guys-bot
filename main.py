@@ -1,8 +1,10 @@
 from dotenv import load_dotenv
 import os
 from typing import Final
-from the_math_guys_bot.handle_message import handle_message
+from the_math_guys_bot.handle_message import handle_message, new_video_message
+from the_math_guys_bot.retrieve_youtube import retrieve_new_youtube_videos 
 import discord
+from discord.ext import tasks
 import random
 
 
@@ -59,6 +61,20 @@ async def usuario_aleatorio(ctx: discord.ApplicationContext):
     random_member = members[random.randint(0, len(members) - 1)]
     random_member = random_member.name
     await ctx.followup.send(f"Usuario aleatorio: {random_member}")
+
+
+@tasks.loop(seconds=60)
+async def update_youtube_videos():
+    print("Updating YouTube latest videos...")
+    new_videos = retrieve_new_youtube_videos("channels.json")
+    if len(new_videos) == 0:
+        print("No new videos found.")
+        return
+    general = bot.get_channel(GENERAL_ID)
+    for new_video in new_videos:
+        print(f"New video: {new_video}")
+        response = new_video_message(new_video)
+        await general.send(response)
 
 
 def main():

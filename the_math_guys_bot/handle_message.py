@@ -14,6 +14,7 @@ MATHLIKE_USER_ID: Final[int] = 546393436668952663
 BOT_USER_ID: Final[int] = 1194231765175369788
 MATHLIKE_ID: Final[int] = 546393436668952663
 
+
 class Classifier(BaseModel):
     type: Literal["dont_answer", "answer"] = Field(
         description="Dado un mensaje en el formato <@USER_ID> \"message\", donde USER_ID es el ID del usuario que habla en el chat y message es el contenido del mensaje, debes clasificar " \
@@ -22,8 +23,10 @@ class Classifier(BaseModel):
         f"- Si el contenido del mensaje te menciona con <@{BOT_USER_ID}> o dicen la palabra 'bot', sea lo que sea, debes responder 'answer'.\n" \
         "- Si el mensaje es un chiste, debes responder con 'answer'.\n" \
         "- Si hablan de ti, debes responder 'answer'.\n" \
+        f"- Si el usuario <@{MATHLIKE_ID}> te pide que anuncies un nuevo video de un canal, debes responder 'answer'.\n" \
         "- De otro modo, como por ejemplo, nadie te menciona, o no es spam, o le hablan a otro usuario, o es otro tipo de respuesta que no sabes, debes responder con 'dont_answer'."
     )
+
 
 whether_to_answer_llm = ChatOpenAI(model="gpt-4o-mini")
 structured_whether_to_answer_llm = whether_to_answer_llm.with_structured_output(Classifier)
@@ -38,7 +41,9 @@ messages = [
                "en tu respuesta, pero si necesitas continuar, puedes decirle al usuario " \
                "que te avise para continuar.\nSi el mensaje " \
                f"es un caso de spam, debes advertirle humorísticamente y mencionar a MathLike con <@{MATHLIKE_ID}>. Si no es spam, pero hablan de ti, " \
-               "responde con humor. También, si alguien cuenta un chiste y no es spam, tú le respondes con risa fuerte, como 'JAJAJAJA' y continuar esa risa con algo coherente.\n" \
+               "responde con humor. También, si alguien cuenta un chiste y no es spam, tú le respondes con risa fuerte, como 'JAJAJAJA' y continuar esa risa " \
+               "con algo coherente. Y si MathLike te dice que alguien del server subió un nuevo video, debes anunciarlo incluyendo los datos que él te mencione, y por supuesto " \
+               "de forma natural y humorística como siempre.\n" \
                "Todo mensaje irá con el formato <@USER_ID> \"message\", donde " \
                "USER_ID es el ID del usuario que te habla, y para mencionar a esa persona, " \
                f"puedes poner <@USER_ID> en tu mensaje. Tu ID es {BOT_USER_ID} y el ID de MathLike es {MATHLIKE_ID}."),
@@ -103,3 +108,11 @@ async def handle_message(message: Message) -> None:
     if response:
         print(f"[TheMathGuysBot]: {response}")
         await message.channel.send(response)
+
+
+def new_video_message(new_video: dict) -> str:
+    discord_id = new_video["discord_id"]
+    channel_name = new_video["channel_name"]
+    video_title = new_video["video_title"]
+    response = output_text_func(HumanMessage(content=[{"type": "text", "text": f"<@{MATHLIKE_ID}> \"Oye bot, el canal de <@{discord_id}>, llamado {channel_name} subió un nuevo video llamado '{video_title}', necesito que lo anuncies.\""}]))
+    return response
