@@ -93,7 +93,7 @@ def output_text_func(new_msg: HumanMessage) -> str:
             simplified_formula = latex(simplified_formula)
             return f"**Fórmula simplificada:**\n\n{formula} \\equiv {simplified_formula}"
         except Exception as e:
-            return f"Hubo un error al simplificar la fórmula proposicional: {e}"
+            return f"Hubo un error al simplificar la fórmula: {e}"
     response = answer_llm.invoke(messages)
     return response.content
 
