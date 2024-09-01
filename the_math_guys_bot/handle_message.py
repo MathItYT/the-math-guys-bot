@@ -81,19 +81,19 @@ messages = [
 def output_text_func(new_msg: HumanMessage) -> str:
     global messages
     messages.append(("human", new_msg.content))
-    answer_or_not: Classifier = structured_whether_to_answer_llm.invoke([new_msg])
+    answer_or_not = structured_whether_to_answer_llm.invoke(messages)
     print(answer_or_not.type)
     if answer_or_not.type == "dont_answer":
         return ""
     if answer_or_not.type == "simplify_formula":
-        tex: LaTeXOutput = latex_llm.invoke([new_msg])
+        tex = latex_llm.invoke([("human", new_msg.content)])
         formula = tex.latex
         try:
             simplified_formula = simplify(parse_latex(formula))
             simplified_formula = latex(simplified_formula)
-            return f"**Fórmula simplificada:**\n\n{formula} \\equiv {simplified_formula}"
-        except Exception as e:
-            return f"Hubo un error al simplificar la fórmula: {e}"
+            return f"**Fórmula simplificada:**\n\n$${formula} \\equiv {simplified_formula}$$"
+        except Exception:
+            return "Hubo un error al simplificar la fórmula."
     response = answer_llm.invoke(messages)
     return response.content
 
