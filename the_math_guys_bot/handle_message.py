@@ -86,7 +86,7 @@ def output_text_func(new_msg: HumanMessage) -> str:
     if answer_or_not.type == "dont_answer":
         return ""
     if answer_or_not.type == "simplify_propositional_formula":
-        tex: LaTeXOutput = latex_llm.invoke(new_msg)
+        tex: LaTeXOutput = latex_llm.invoke([new_msg])
         formula = tex.latex
         try:
             simplified_formula = simplify(parse_latex(formula))
