@@ -5,24 +5,25 @@ import base64
 from openai import OpenAI
 from pydantic import BaseModel, Field
 import discord
+import requests
 import os
-import wolframalpha
+import xmltodict
 
 
 load_dotenv()
 client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
-wolfram_client = wolframalpha.Client(os.getenv("WOLFRAM_APP_ID"))
 
 MATHLIKE_USER_ID: Final[int] = 546393436668952663
 BOT_USER_ID: Final[int] = 1194231765175369788
 MATHLIKE_ID: Final[int] = 546393436668952663
+WOLFRAM_APP_ID: Final[str] = os.getenv("WOLFRAM_APP_ID")
 
 
 class Classifier(BaseModel):
-    type: Literal["dont_answer", "answer", "simplify_formula"] = Field(
+    type: Literal["dont_answer", "answer", "solve_math"] = Field(
         description="Dado un mensaje en el formato <@USER_ID> \"message\", donde USER_ID es el ID del usuario que habla en el chat y message es el contenido del mensaje, debes clasificar " \
-        "entre algo que se debe responder, algo que no se debe responder, o una fórmula que se debe simplificar. Las reglas son las siguientes:\n" \
-        "- Si el mensaje es una fórmula que el usuario te pide simplificar, debes responder 'simplify_formula'.\n" \
+        "entre algo que se debe responder, algo que no se debe responder, o un problema matemático. Las reglas son las siguientes:\n" \
+        "- Si el mensaje tiene un problema matemático que puede pasarse a una fórmula que haga que se pueda resolver, se debe responder con 'solve_math'.\n" \
         "- Si el mensaje es spam, se debe responder con 'answer'.\n" \
         f"- Si el contenido del mensaje te menciona con <@{BOT_USER_ID}> o dicen la palabra 'bot', sea lo que sea, debes responder 'answer'.\n" \
         "- Si el mensaje es un chiste, debes responder con 'answer'.\n" \
@@ -32,9 +33,9 @@ class Classifier(BaseModel):
     )
 
 
-class LaTeXOutput(BaseModel):
-    latex: str = Field(description="LaTeX output of the formula given by the user without delimiters like $ or $$ and without simplifying or solving it.")
-
+class ActionAndLaTeXOutput(BaseModel):
+    action: str = Field(description="La acción que se debe realizar con la fórmula dada por el usuario. Es un verbo imperativo en español.")
+    latex: str = Field(description="La fórmula dada por el usuario en formato LaTeX.")
 
 messages: list[dict[str, str]] = [
     {"role": "system", "content": "Contexto: Tu nombre es TheMathGuysBot y eres un bot de Discord " \
@@ -87,23 +88,33 @@ async def output_text_func(new_msg: dict[str, str]) -> str:
     print(f"Type: {answer_or_not.parsed.type}")
     if answer_or_not.parsed.type == "dont_answer":
         return ""
-    if answer_or_not.parsed.type == "simplify_formula":
+    if answer_or_not.parsed.type == "solve_math":
         tex = client.beta.chat.completions.parse(
             messages=[new_msg],
             model="gpt-4o-mini",
-            response_format=LaTeXOutput
+            response_format=ActionAndLaTeXOutput
         )
         formula = tex.choices[0].message
         if not formula.parsed:
             return ""
-        formula = formula.parsed.latex
+        tex_string = formula.parsed.latex
+        action = formula.parsed.action
         try:
-            print(f"Formula: {formula}")
-            simplified_formula = await wolfram_client.aquery(f"simplify {formula}")
-            simplified_formula = next(simplified_formula.results).text
-            return f"**Fórmula simplificada:**\n\n{simplified_formula}"
+            print(f"Formula: {tex_string}")
+            simplified_formula = requests.get(f"http://api.wolframalpha.com/v2/query", params={
+                "input": f"{action} {tex_string}",
+                "format": "plaintext",
+                "appid": WOLFRAM_APP_ID,
+                "podstate": "Step-by-step solution"
+            }).text
+            simplified_formula = xmltodict.parse(simplified_formula)
+            data = simplified_formula["queryresult"]["pod"]
+            data = [pod for pod in data if pod["@title"] == "Results"][0]
+            result = [subpod["plaintext"] for subpod in data["subpod"] if subpod["@title"] == ""][0]
+            steps = [subpod["plaintext"] for subpod in data["subpod"] if subpod["@title"] == "Possible intermediate steps"][0]
+            return f"**Resultado:**\n{result}\n\n**Pasos intermedios:**\n{steps}"
         except Exception:
-            return "Hubo un error al simplificar la fórmula."
+            return "Hubo un error al resolver el problema, intenta de nuevo."
     response = client.chat.completions.create(
         messages=messages,
         model="gpt-4o"
