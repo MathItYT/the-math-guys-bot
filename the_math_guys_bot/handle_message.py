@@ -99,22 +99,19 @@ async def output_text_func(new_msg: dict[str, str]) -> str:
             return ""
         tex_string = formula.parsed.latex
         action = formula.parsed.action
-        try:
-            print(f"Formula: {tex_string}")
-            simplified_formula = requests.get(f"http://api.wolframalpha.com/v2/query", params={
-                "input": f"{action} {tex_string}",
-                "format": "plaintext",
-                "appid": WOLFRAM_APP_ID,
-                "podstate": "Step-by-step solution"
-            }).text
-            simplified_formula = xmltodict.parse(simplified_formula)
-            data = simplified_formula["queryresult"]["pod"]
-            data = [pod for pod in data if pod["@title"] == "Results"][0]
-            result = [subpod["plaintext"] for subpod in data["subpod"] if subpod["@title"] == ""][0]
-            steps = [subpod["plaintext"] for subpod in data["subpod"] if subpod["@title"] == "Possible intermediate steps"][0]
-            return f"**Resultado:**\n{result}\n\n**Pasos intermedios:**\n{steps}"
-        except Exception:
-            return "Hubo un error al resolver el problema, intenta de nuevo."
+        print(f"Formula: {tex_string}")
+        simplified_formula = requests.get(f"http://api.wolframalpha.com/v2/query", params={
+            "input": f"{action} {tex_string}",
+            "format": "plaintext",
+            "appid": WOLFRAM_APP_ID,
+            "podstate": "Step-by-step solution"
+        }).text
+        simplified_formula = xmltodict.parse(simplified_formula)
+        data = simplified_formula["queryresult"]["pod"]
+        data = [pod for pod in data if pod["@title"] == "Results"][0]
+        result = [subpod["plaintext"] for subpod in data["subpod"] if subpod["@title"] == ""][0]
+        steps = [subpod["plaintext"] for subpod in data["subpod"] if subpod["@title"] == "Possible intermediate steps"][0]
+        return f"**Resultado:**\n{result}\n\n**Pasos intermedios:**\n{steps}"
     response = client.chat.completions.create(
         messages=messages,
         model="gpt-4o"
