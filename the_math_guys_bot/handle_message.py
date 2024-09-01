@@ -1,6 +1,6 @@
 from discord import Message
 from typing import Final, Literal
-from langchain_openai import ChatOpenAI, OpenAI
+from langchain_openai import ChatOpenAI
 from langchain_core.pydantic_v1 import BaseModel, Field
 from langchain_core.runnables import RunnableLambda
 from langchain_core.messages import HumanMessage
@@ -36,8 +36,8 @@ class LaTeXOutput(BaseModel):
     latex: str = Field(description="LaTeX output of the formula given by the user without delimiters like $ or $$ and without simplifying or solving it.")
 
 
-whether_to_answer_llm = OpenAI(model="gpt-4o-mini")
-latex_llm = OpenAI(model="gpt-4o-mini").with_structured_output(LaTeXOutput)
+whether_to_answer_llm = ChatOpenAI(model="gpt-4o-mini")
+latex_llm = ChatOpenAI(model="gpt-4o-mini").with_structured_output(LaTeXOutput)
 structured_whether_to_answer_llm = whether_to_answer_llm.with_structured_output(Classifier)
 answer_llm = ChatOpenAI(model="gpt-4o")
 
@@ -81,12 +81,12 @@ messages = [
 def output_text_func(new_msg: HumanMessage) -> str:
     global messages
     messages.append(("human", new_msg.content))
-    answer_or_not: Classifier = structured_whether_to_answer_llm.invoke(new_msg)
+    answer_or_not: Classifier = structured_whether_to_answer_llm.invoke([new_msg])
     print(answer_or_not.type)
     if answer_or_not.type == "dont_answer":
         return ""
     if answer_or_not.type == "simplify_formula":
-        tex: LaTeXOutput = latex_llm.invoke(new_msg)
+        tex: LaTeXOutput = latex_llm.invoke([new_msg])
         formula = tex.latex
         try:
             simplified_formula = simplify(parse_latex(formula))
