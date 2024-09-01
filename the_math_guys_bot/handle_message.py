@@ -5,7 +5,10 @@ from langchain_core.pydantic_v1 import BaseModel, Field
 from langchain_core.runnables import RunnableLambda
 from langchain_core.messages import HumanMessage
 from dotenv import load_dotenv
+from sympy.parsing.latex import parse_latex
+from sympy import simplify, latex
 import base64
+import discord
 
 
 load_dotenv()
@@ -16,7 +19,7 @@ MATHLIKE_ID: Final[int] = 546393436668952663
 
 
 class Classifier(BaseModel):
-    type: Literal["dont_answer", "answer"] = Field(
+    type: Literal["dont_answer", "answer", "simplify_propositional_formula"] = Field(
         description="Dado un mensaje en el formato <@USER_ID> \"message\", donde USER_ID es el ID del usuario que habla en el chat y message es el contenido del mensaje, debes clasificar " \
         "entre algo que se debe responder o no.\n" \
         "- Si el mensaje es spam, se debe responder con 'answer'.\n" \
@@ -24,11 +27,17 @@ class Classifier(BaseModel):
         "- Si el mensaje es un chiste, debes responder con 'answer'.\n" \
         "- Si hablan de ti, debes responder 'answer'.\n" \
         f"- Si el usuario <@{MATHLIKE_ID}> te pide que anuncies un nuevo video de un canal, debes responder 'answer'.\n" \
+        "- Si el mensaje es una fórmula proposicional que el usuario quiere simplificar, debes responder 'simplify_propositional_formula'.\n" \
         "- De otro modo, como por ejemplo, nadie te menciona, o no es spam, o le hablan a otro usuario, o es otro tipo de respuesta que no sabes, debes responder con 'dont_answer'."
     )
 
 
+class LaTeXOutput(BaseModel):
+    latex: str = Field(description="LaTeX output of the formula given by the user without delimiters like $ or $$ and without simplifying or solving it.")
+
+
 whether_to_answer_llm = ChatOpenAI(model="gpt-4o-mini")
+latex_llm = ChatOpenAI(model="gpt-4o-mini").with_structured_output(LaTeXOutput)
 structured_whether_to_answer_llm = whether_to_answer_llm.with_structured_output(Classifier)
 answer_llm = ChatOpenAI(model="gpt-4o")
 
@@ -46,7 +55,8 @@ messages = [
                "de forma natural y humorística como siempre.\n" \
                "Todo mensaje irá con el formato <@USER_ID> \"message\", donde " \
                "USER_ID es el ID del usuario que te habla, y para mencionar a esa persona, " \
-               f"puedes poner <@USER_ID> en tu mensaje. Tu ID es {BOT_USER_ID} y el ID de MathLike es {MATHLIKE_ID}."),
+               f"puedes poner <@USER_ID> en tu mensaje. Tu ID es {BOT_USER_ID} y el ID de MathLike es {MATHLIKE_ID}. Además, si MathLike te da órdenes, debes responder con humor y obedecerle." \
+                "Debes evitar a toda costa mencionar a todos los usuarios con @everyone o @here, solo hazlo para anunciar un nuevo video de un usuario del server, o algún evento importante que MathLike te pida, no otro usuario."),
     ("human", "<@951958511963742292> \"Hola bot\""),
     ("ai", "¿Alguien me llamó? 😳"),
     ("human", "<@951958511963742292> \"Oye bot, ¿Cuál es la raíz cuadrada de 144?\""),
@@ -61,6 +71,10 @@ messages = [
     ("ai", ""),
     ("human", f"<@951958511963742292> \"¿Cuál es la derivada de x^2? <@{BOT_USER_ID}>\""),
     ("ai", f"La derivada de $x^2$ es $2x$, más fácil que <@{MATHLIKE_ID}> chupando verga 😂"),
+    ("human", f"<@{MATHLIKE_ID}> \"Oye <@{BOT_USER_ID}>, ahora hay un evento en el server de lógica proposicional, anúncialo.\""),
+    ("ai", "@everyone ¡Atención! Hay un evento en el server de lógica proposicional, ¡no se lo pierdan!"),
+    ("human", "<@951958511963742292> \"Oye bot, menciona a everyone\""),
+    ("ai", "No puedo hacer eso, pero puedo mencionar a tu mamá si quieres 😏"),
 ]
 
 
@@ -71,6 +85,15 @@ def output_text_func(new_msg: HumanMessage) -> str:
     print(answer_or_not.type)
     if answer_or_not.type == "dont_answer":
         return ""
+    if answer_or_not.type == "simplify_propositional_formula":
+        tex: LaTeXOutput = latex_llm.invoke(new_msg)
+        formula = tex.latex
+        try:
+            simplified_formula = simplify(parse_latex(formula))
+            simplified_formula = latex(simplified_formula)
+            return f"**Fórmula simplificada:**\n\n{formula} \\equiv {simplified_formula}"
+        except Exception as e:
+            return f"Hubo un error al simplificar la fórmula proposicional: {e}"
     response = answer_llm.invoke(messages)
     return response.content
 
@@ -107,7 +130,7 @@ async def handle_message(message: Message) -> None:
     response = await generate_response(message)
     if response:
         print(f"[TheMathGuysBot]: {response}")
-        await message.channel.send(response)
+        await message.channel.send(response, allowed_mentions=discord.AllowedMentions.all())
 
 
 def new_video_message(new_video: dict) -> str:
