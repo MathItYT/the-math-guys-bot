@@ -34,7 +34,7 @@ class Classifier(BaseModel):
 
 
 class ActionAndLaTeXOutput(BaseModel):
-    action: str = Field(description="La acción que se debe realizar con la fórmula dada por el usuario. Es un verbo imperativo en español.")
+    action: str = Field(description="La acción que se debe realizar con la fórmula dada por el usuario. Es un verbo imperativo en inglés.")
     latex: str = Field(description="La fórmula dada por el usuario en formato LaTeX.")
 
 messages: list[dict[str, str]] = [
@@ -100,6 +100,7 @@ async def output_text_func(new_msg: dict[str, str]) -> str:
         tex_string = formula.parsed.latex
         action = formula.parsed.action
         print(f"Formula: {tex_string}")
+        print(f"Action: {action}")
         simplified_formula = requests.get(f"http://api.wolframalpha.com/v2/query", params={
             "input": f"{action} {tex_string}",
             "format": "plaintext",
