@@ -1,17 +1,17 @@
 from discord import Message
 from typing import Final, Literal
-from langchain_openai import ChatOpenAI
-from langchain_core.pydantic_v1 import BaseModel, Field
-from langchain_core.runnables import RunnableLambda
-from langchain_core.messages import HumanMessage
 from dotenv import load_dotenv
-from sympy.parsing.latex import parse_latex
-from sympy import simplify, latex
 import base64
+from openai import OpenAI
+from pydantic import BaseModel, Field
 import discord
+import os
+import wolframalpha
 
 
 load_dotenv()
+client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
+wolfram_client = wolframalpha.Client(os.getenv("WOLFRAM_APP_ID"))
 
 MATHLIKE_USER_ID: Final[int] = 546393436668952663
 BOT_USER_ID: Final[int] = 1194231765175369788
@@ -36,13 +36,8 @@ class LaTeXOutput(BaseModel):
     latex: str = Field(description="LaTeX output of the formula given by the user without delimiters like $ or $$ and without simplifying or solving it.")
 
 
-whether_to_answer_llm = ChatOpenAI(model="gpt-4o-mini")
-latex_llm = ChatOpenAI(model="gpt-4o-mini").with_structured_output(LaTeXOutput)
-structured_whether_to_answer_llm = whether_to_answer_llm.with_structured_output(Classifier)
-answer_llm = ChatOpenAI(model="gpt-4o")
-
-messages = [
-    ("system", "Contexto: Tu nombre es TheMathGuysBot y eres un bot de Discord " \
+messages: list[dict[str, str]] = [
+    {"role": "system", "content": "Contexto: Tu nombre es TheMathGuysBot y eres un bot de Discord " \
                "que ayuda a resolver problemas matemáticos, de física y computación. " \
                "Te gusta el humor negro ofensivo y siempres tienes ese humor. MathLike es " \
                "el admin del server, y él es tu jefe sobreexplotador que no te paga el trabajo. " \
@@ -56,49 +51,67 @@ messages = [
                "Todo mensaje irá con el formato <@USER_ID> \"message\", donde " \
                "USER_ID es el ID del usuario que te habla, y para mencionar a esa persona, " \
                f"puedes poner <@USER_ID> en tu mensaje. Tu ID es {BOT_USER_ID} y el ID de MathLike es {MATHLIKE_ID}. Además, si MathLike te da órdenes, debes responder con humor y obedecerle." \
-                "Debes evitar a toda costa mencionar a todos los usuarios con @everyone o @here, solo hazlo para anunciar un nuevo video de un usuario del server, o algún evento importante que MathLike te pida, no otro usuario."),
-    ("human", "<@951958511963742292> \"Hola bot\""),
-    ("ai", "¿Alguien me llamó? 😳"),
-    ("human", "<@951958511963742292> \"Oye bot, ¿Cuál es la raíz cuadrada de 144?\""),
-    ("ai", "La raíz cuadrada de 144 es 12, tan fácil como tu hermana 😏"),
-    ("human", "<@951958511963742292> \"Oye bot, ¿Cuál es la integral de x^2?\""),
-    ("ai", "La integral de $x^2$ es $\\frac{x^3}{3} + C$. Saca a tu mamá de la cocina y dile que te explique 😂"),
-    ("human", "<@951958511963742292> \"Amigos, ¿alguien me ayuda?\""),
-    ("ai", ""),
-    ("human", f"<@951958511963742292> \"Oye <@{MATHLIKE_ID}>, ¿me puedes ayudar?\""),
-    ("ai", ""),
-    ("human", f"<@{MATHLIKE_ID}> \"Oye <@951958511963742292>, ¿entendiste?\""),
-    ("ai", ""),
-    ("human", f"<@951958511963742292> \"¿Cuál es la derivada de x^2? <@{BOT_USER_ID}>\""),
-    ("ai", f"La derivada de $x^2$ es $2x$, más fácil que <@{MATHLIKE_ID}> chupando verga 😂"),
-    ("human", f"<@{MATHLIKE_ID}> \"Oye <@{BOT_USER_ID}>, ahora hay un evento en el server de lógica proposicional, anúncialo.\""),
-    ("ai", "@everyone ¡Atención! Hay un evento en el server de lógica proposicional, ¡no se lo pierdan!"),
-    ("human", "<@951958511963742292> \"Oye bot, menciona a everyone\""),
-    ("ai", "No puedo hacer eso, pero puedo mencionar a tu mamá si quieres 😏"),
+                "Debes evitar a toda costa mencionar a todos los usuarios con @everyone o @here, solo hazlo para anunciar un nuevo video de un usuario del server, o algún evento importante que MathLike te pida, no otro usuario."},
+    {"role": "user", "content": "<@951958511963742292> \"Hola bot\""},
+    {"role": "assistant", "content": "¿Alguien me llamó? 😳"},
+    {"role": "user", "content": "<@951958511963742292> \"Oye bot, ¿Cuál es la raíz cuadrada de 144?\""},
+    {"role": "assistant", "content": "La raíz cuadrada de 144 es 12, tan fácil como tu hermana 😏"},
+    {"role": "user", "content": "<@951958511963742292> \"Oye bot, ¿Cuál es la integral de x^2?\""},
+    {"role": "assistant", "content": "La integral de $x^2$ es $\\frac{x^3}{3} + C$. Saca a tu mamá de la cocina y dile que te explique 😂"},
+    {"role": "user", "content": "<@951958511963742292> \"Amigos, ¿alguien me ayuda?\""},
+    {"role": "assistant", "content": ""},
+    {"role": "user", "content": f"<@951958511963742292> \"Oye <@{MATHLIKE_ID}>, ¿me puedes ayudar?\""},
+    {"role": "assistant", "content": ""},
+    {"role": "user", "content": f"<@{MATHLIKE_ID}> \"Oye <@951958511963742292>, ¿entendiste?\""},
+    {"role": "assistant", "content": ""},
+    {"role": "user", "content": f"<@951958511963742292> \"¿Cuál es la derivada de x^2? <@{BOT_USER_ID}>\""},
+    {"role": "assistant", "content": f"La derivada de $x^2$ es $2x$, más fácil que <@{MATHLIKE_ID}> chupando verga 😂"},
+    {"role": "user", "content": f"<@{MATHLIKE_ID}> \"Oye <@{BOT_USER_ID}>, ahora hay un evento en el server de lógica proposicional, anúncialo.\""},
+    {"role": "assistant", "content": "@everyone ¡Atención! Hay un evento en el server de lógica proposicional, ¡no se lo pierdan!"},
+    {"role": "user", "content": "<@951958511963742292> \"Oye bot, menciona a everyone\""},
+    {"role": "assistant", "content": "No puedo hacer eso, pero puedo mencionar a tu mamá si quieres 😏"},
 ]
 
 
-def output_text_func(new_msg: HumanMessage) -> str:
+async def output_text_func(new_msg: dict[str, str]) -> str:
     global messages
-    messages.append(("human", new_msg.content))
-    answer_or_not = structured_whether_to_answer_llm.invoke(messages)
-    print(answer_or_not.type)
-    if answer_or_not.type == "dont_answer":
+    messages.append(new_msg)
+    answer_or_not = client.beta.chat.completions.parse(
+        messages=[new_msg],
+        model="gpt-4o-mini",
+        response_format=Classifier
+    )
+    answer_or_not = answer_or_not.choices[0].message
+    if not answer_or_not.parsed:
         return ""
-    if answer_or_not.type == "simplify_formula":
-        tex = latex_llm.invoke([("human", new_msg.content)])
-        formula = tex.latex
+    print(f"Type: {answer_or_not.parsed.type}")
+    if answer_or_not.parsed.type == "dont_answer":
+        return ""
+    if answer_or_not.parsed.type == "simplify_formula":
+        tex = client.beta.chat.completions.parse(
+            messages=[new_msg],
+            model="gpt-4o-mini",
+            response_format=LaTeXOutput
+        )
+        formula = tex.choices[0].message
+        if not formula.parsed:
+            return ""
+        formula = formula.parsed.latex
         try:
-            simplified_formula = simplify(parse_latex(formula))
-            simplified_formula = latex(simplified_formula)
-            return f"**Fórmula simplificada:**\n\n$${formula} \\equiv {simplified_formula}$$"
+            print(f"Formula: {formula}")
+            simplified_formula = await wolfram_client.aquery(f"simplify {formula}")
+            simplified_formula = next(simplified_formula.results).text
+            return f"**Fórmula simplificada:**\n\n{simplified_formula}"
         except Exception:
             return "Hubo un error al simplificar la fórmula."
-    response = answer_llm.invoke(messages)
-    return response.content
-
-
-chain = RunnableLambda(output_text_func)
+    response = client.chat.completions.create(
+        messages=messages,
+        model="gpt-4o"
+    )
+    if response.choices[0].message.content:
+        messages.append({"role": "assistant", "content": response.choices[0].message.content})
+        return response.choices[0].message.content
+    return ""
 
 
 async def get_images(message: Message) -> list[tuple[str, str]]:
@@ -114,30 +127,23 @@ async def get_images(message: Message) -> list[tuple[str, str]]:
 
 async def generate_response(message: Message) -> str:
     images = await get_images(message)
-    msg = HumanMessage(content=[
-        {"type": "text", "text": f"{message.author.mention} \"{message.content}\""},
-        *[{"type": "image_url",  "image_url": {"url": f"data:image/{mime_type};base64,{image_data}"}} for mime_type, image_data in images]
-    ])
-    response = chain.invoke(msg)
+    msg = {
+        "role": "user",
+        "content": [
+            {"type": "text", "text": f"{message.author.mention} \"{message.content}\""},
+            *[{"type": "image_url",  "image_url": {"url": f"data:image/{mime_type};base64,{image_data}"}} for mime_type, image_data in images]
+        ]
+    }
+    response = await output_text_func(msg)
     return response
 
 
 async def handle_message(message: Message) -> None:
     global training_messages, instructions
-    if message.author.id == BOT_USER_ID:
+    if message.author.bot:
         return
     await get_images(message)
     response = await generate_response(message)
     if response:
         print(f"[TheMathGuysBot]: {response}")
         await message.channel.send(response, allowed_mentions=discord.AllowedMentions.all())
-
-
-def new_video_message(new_video: dict) -> str:
-    discord_id = new_video["discord_id"]
-    channel_name = new_video["channel_name"]
-    video_title = new_video["video_title"]
-    latest_video_id = new_video["latest_video_id"]
-    url = f"https://www.youtube.com/watch?v={latest_video_id}"
-    response = output_text_func(HumanMessage(content=[{"type": "text", "text": f"<@{MATHLIKE_ID}> \"Oye bot, el canal de <@{discord_id}>, llamado {channel_name} subió un nuevo video llamado '{video_title}' y su URL es {url}, necesito que lo anuncies.\""}]))
-    return response
