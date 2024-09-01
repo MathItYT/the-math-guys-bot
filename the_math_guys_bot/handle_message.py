@@ -19,15 +19,15 @@ MATHLIKE_ID: Final[int] = 546393436668952663
 
 
 class Classifier(BaseModel):
-    type: Literal["dont_answer", "answer", "simplify_propositional_formula"] = Field(
+    type: Literal["dont_answer", "answer", "simplify_formula"] = Field(
         description="Dado un mensaje en el formato <@USER_ID> \"message\", donde USER_ID es el ID del usuario que habla en el chat y message es el contenido del mensaje, debes clasificar " \
-        "entre algo que se debe responder o no.\n" \
+        "entre algo que se debe responder, algo que no se debe responder, o una fórmula proposicional que se debe simplificar. Las reglas son las siguientes:\n" \
+        "- Si el mensaje es una fórmula que el usuario te pide simplificar, debes responder 'simplify_formula'.\n" \
         "- Si el mensaje es spam, se debe responder con 'answer'.\n" \
         f"- Si el contenido del mensaje te menciona con <@{BOT_USER_ID}> o dicen la palabra 'bot', sea lo que sea, debes responder 'answer'.\n" \
         "- Si el mensaje es un chiste, debes responder con 'answer'.\n" \
         "- Si hablan de ti, debes responder 'answer'.\n" \
         f"- Si el usuario <@{MATHLIKE_ID}> te pide que anuncies un nuevo video de un canal, debes responder 'answer'.\n" \
-        "- Si el mensaje es una fórmula proposicional que el usuario quiere simplificar, debes responder 'simplify_propositional_formula'.\n" \
         "- De otro modo, como por ejemplo, nadie te menciona, o no es spam, o le hablan a otro usuario, o es otro tipo de respuesta que no sabes, debes responder con 'dont_answer'."
     )
 
@@ -81,11 +81,11 @@ messages = [
 def output_text_func(new_msg: HumanMessage) -> str:
     global messages
     messages.append(("human", new_msg.content))
-    answer_or_not = structured_whether_to_answer_llm.invoke([new_msg])
+    answer_or_not: Classifier = structured_whether_to_answer_llm.invoke([new_msg])
     print(answer_or_not.type)
     if answer_or_not.type == "dont_answer":
         return ""
-    if answer_or_not.type == "simplify_propositional_formula":
+    if answer_or_not.type == "simplify_formula":
         tex: LaTeXOutput = latex_llm.invoke([new_msg])
         formula = tex.latex
         try:
