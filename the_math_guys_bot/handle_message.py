@@ -5,9 +5,9 @@ import base64
 from openai import OpenAI
 from pydantic import BaseModel, Field
 import discord
+from io import BytesIO
 import requests
 import os
-import xmltodict
 
 
 load_dotenv()
@@ -37,6 +37,15 @@ class ActionAndLaTeXOutput(BaseModel):
     action: str = Field(description="La acción que se debe realizar con la fórmula dada por el usuario. Es un verbo imperativo en inglés.")
     latex: str = Field(description="La fórmula dada por el usuario en formato LaTeX.")
 
+
+MATH_SYSTEM: Final[str] = "Si el mensaje empieza con <@WOLFRAM_SOLVER>, lo que sigue es un problema matemático " \
+    "que está resuelto con el sistema de Wolfram Alpha. WOLFRAM_SOLVER no es un usuario de Discord, por lo que " \
+    "no puedes mencionarlo. No debes resolverlo, pues Wolfram Alpha ya lo resolvió. Solo debes responder de forma natural " \
+    "como lo harías siempre con base en la respuesta que te dio Wolfram Alpha, por supuesto traducido al español y con humor. " \
+    "Si el mensaje no empieza con <@WOLFRAM_SOLVER>, entonces es un mensaje normal y debes responder de forma natural y humorística, " \
+    "y puedes mencionar al usuario que te habló si es necesario, pero no a todos los usuarios con @everyone o @here, a menos que MathLike te lo pida."
+
+
 messages: list[dict[str, str]] = [
     {"role": "system", "content": "Contexto: Tu nombre es TheMathGuysBot y eres un bot de Discord " \
                "que ayuda a resolver problemas matemáticos, de física y computación. " \
@@ -52,7 +61,7 @@ messages: list[dict[str, str]] = [
                "Todo mensaje irá con el formato <@USER_ID> \"message\", donde " \
                "USER_ID es el ID del usuario que te habla, y para mencionar a esa persona, " \
                f"puedes poner <@USER_ID> en tu mensaje. Tu ID es {BOT_USER_ID} y el ID de MathLike es {MATHLIKE_ID}. Además, si MathLike te da órdenes, debes responder con humor y obedecerle." \
-                "Debes evitar a toda costa mencionar a todos los usuarios con @everyone o @here, solo hazlo para anunciar un nuevo video de un usuario del server, o algún evento importante que MathLike te pida, no otro usuario."},
+                "Debes evitar a toda costa mencionar a todos los usuarios con @everyone o @here, solo hazlo para anunciar un nuevo video de un usuario del server, o algún evento importante que MathLike te pida, no otro usuario.\n" + MATH_SYSTEM},
     {"role": "user", "content": "<@951958511963742292> \"Hola bot\""},
     {"role": "assistant", "content": "¿Alguien me llamó? 😳"},
     {"role": "user", "content": "<@951958511963742292> \"Oye bot, ¿Cuál es la raíz cuadrada de 144?\""},
@@ -74,23 +83,31 @@ messages: list[dict[str, str]] = [
 ]
 
 
-def get_pods_data(pods: list[dict[str, str]]) -> list[str]:
-    results = []
+def get_pods_data(pods: list[dict[str, str]]) -> tuple[list[str], list[str]]:
+    text_results = []
+    image_results = []
     for pod in pods:
-        title = pod["@title"]
+        title = pod["title"]
         plaintext = pod.get("plaintext")
-        if plaintext:
-            results.append(f"{title}\n{plaintext}")
+        image = pod.get("img")
+        if plaintext and title:
+            text_results.append(f"{title}\n{plaintext}")
+        elif plaintext:
+            text_results.append(plaintext)
         else:
-            results.append(title)
+            text_results.append(title)
+        if image:
+            image_results.append(image["src"])
         subpods = pod.get("subpod", [])
         if isinstance(subpods, dict):
             subpods = [subpods]
-        results.extend(get_pods_data(subpods))
-    return results
+        sub_text_results, sub_image_results = get_pods_data(subpods)
+        text_results.extend(sub_text_results)
+        image_results.extend(sub_image_results)
+    return text_results, image_results
 
 
-async def output_text_func(new_msg: dict[str, str]) -> str:
+async def output_text_func(new_msg: dict[str, str]) -> str | tuple[str, list[str]]:
     global messages
     messages.append(new_msg)
     answer_or_not = client.beta.chat.completions.parse(
@@ -119,14 +136,25 @@ async def output_text_func(new_msg: dict[str, str]) -> str:
         print(f"Action: {action}")
         simplified_formula = requests.get(f"http://api.wolframalpha.com/v2/query", params={
             "input": f"{action} {tex_string}",
-            "format": "plaintext",
             "appid": WOLFRAM_APP_ID,
-            "podstate": "Step-by-step solution"
-        }).text
-        simplified_formula = xmltodict.parse(simplified_formula)
+            "format": "plaintext,image",
+            "output": "json"
+        }).json()
         data = simplified_formula["queryresult"]["pod"]
-        pods = get_pods_data(data)
-        return "\n\n".join(pods)
+        text_results, image_results = get_pods_data(data)
+        text_results = "\n\n".join(text_results)
+        messages.append({"role": "user", "content": [
+            {"type": "text", "text": f"<@WOlFRAM_SOLVER> \"{text_results}\""},
+            *[{"type": "image_url", "image_url": {"url": image}} for image in image_results]
+        ]})
+        response = client.chat.completions.create(
+            messages=messages,
+            model="gpt-4o"
+        )
+        if response.choices[0].message.content:
+            messages.append({"role": "assistant", "content": response.choices[0].message.content})
+            return response.choices[0].message.content, image_results
+        return ""
     response = client.chat.completions.create(
         messages=messages,
         model="gpt-4o"
@@ -148,7 +176,7 @@ async def get_images(message: Message) -> list[tuple[str, str]]:
     return images
 
 
-async def generate_response(message: Message) -> str:
+async def generate_response(message: Message) -> str | tuple[str, list[str]]:
     images = await get_images(message)
     msg = {
         "role": "user",
@@ -167,6 +195,17 @@ async def handle_message(message: Message) -> None:
         return
     await get_images(message)
     response = await generate_response(message)
-    if response:
+    if response and isinstance(response, str):
         print(f"[TheMathGuysBot]: {response}")
         await message.channel.send(response, allowed_mentions=discord.AllowedMentions.all())
+    elif response and isinstance(response, tuple):
+        text, images = response
+        print(f"[TheMathGuysBot]: {text}")
+        image_files = []
+        for image in images:
+            response = requests.get(image)
+            image_data = BytesIO(response.content)
+            image_files.append(discord.File(image_data, filename="attachment.png"))
+        await message.channel.send(text, files=image_files, allowed_mentions=discord.AllowedMentions.all())
+    else:
+        print(f"[TheMathGuysBot]: No response")
