@@ -161,7 +161,7 @@ async def output_text_func(new_msg: dict[str, str]) -> str | tuple[str, list[str
                 classify_image_needed = client.beta.chat.completions.parse(
                     messages=[
                         {"role": "system", "content": "Debes determinar si la imagen es necesaria para entender el mensaje, o si es relevante para el mensaje."},
-                        {"role": "assistant", "content": [
+                        {"role": "user", "content": [
                             {"type": "text", "text": response.choices[0].message.content},
                             img
                         ]}
