@@ -84,7 +84,9 @@ messages: list[dict[str, str]] = [
 
 
 class NecessaryImage(BaseModel):
-    necessary: bool = Field(description="Si es necesaria la imagen para entender el mensaje, debe ser True. Si ya se describe en el mensaje, debe ser False.")
+    necessary: bool = Field(description="Si es necesaria la imagen para entender el mensaje, debe ser True. Si ya se describe en el mensaje, debe ser False.\n" \
+                            "Por ejemplo, si el mensaje está destinado para mostrar una gráfica y la imagen es la gráfica, entonces la imagen es necesaria. " \
+                            "Si la imagen es una ecuación matemática y la ecuación ya está escrita en el mensaje, entonces la imagen no es necesaria.")
 
 
 def get_pods_data(pods: list[dict[str, str]]) -> tuple[list[str], list[str]]:
@@ -160,7 +162,9 @@ async def output_text_func(new_msg: dict[str, str]) -> str | tuple[str, list[str
             for img in imgs:
                 classify_image_needed = client.beta.chat.completions.parse(
                     messages=[
-                        {"role": "system", "content": "Debes determinar si la imagen es necesaria para entender el mensaje, o si es relevante para el mensaje."},
+                        {"role": "system", "content": "Debes determinar si la imagen es necesaria para entender el mensaje, o si es relevante para el mensaje. Por ejemplo, si el mensaje " \
+                         "es una gráfica y la imagen es la gráfica, entonces la imagen es necesaria. Si la imagen es una ecuación matemática y la ecuación ya está escrita en el mensaje, " \
+                         "entonces la imagen no es necesaria."},
                         {"role": "user", "content": [
                             {"type": "text", "text": response.choices[0].message.content},
                             img
