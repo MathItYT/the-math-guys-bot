@@ -98,9 +98,7 @@ def get_pods_data(pods: list[dict[str, str]]) -> tuple[list[str], list[str]]:
             text_results.append(title)
         if image:
             image_results.append(image["src"])
-        subpods = pod.get("subpod", [])
-        if isinstance(subpods, dict):
-            subpods = [subpods]
+        subpods = pod.get("subpods", [])
         sub_text_results, sub_image_results = get_pods_data(subpods)
         text_results.extend(sub_text_results)
         image_results.extend(sub_image_results)
@@ -140,7 +138,7 @@ async def output_text_func(new_msg: dict[str, str]) -> str | tuple[str, list[str
             "format": "plaintext,image",
             "output": "json"
         }).json()
-        data = simplified_formula["queryresult"]["pod"]
+        data = simplified_formula["queryresult"]["pods"]
         text_results, image_results = get_pods_data(data)
         text_results = "\n\n".join(text_results)
         messages.append({"role": "user", "content": [
