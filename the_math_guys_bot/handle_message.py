@@ -74,6 +74,22 @@ messages: list[dict[str, str]] = [
 ]
 
 
+def get_pods_data(pods: list[dict[str, str]]) -> list[str]:
+    results = []
+    for pod in pods:
+        title = pod["@title"]
+        plaintext = pod.get("plaintext")
+        if plaintext:
+            results.append(f"{title}\n{plaintext}")
+        else:
+            results.append(title)
+        subpods = pod.get("subpod", [])
+        if isinstance(subpods, dict):
+            subpods = [subpods]
+        results.extend(get_pods_data(subpods))
+    return results
+
+
 async def output_text_func(new_msg: dict[str, str]) -> str:
     global messages
     messages.append(new_msg)
@@ -109,10 +125,8 @@ async def output_text_func(new_msg: dict[str, str]) -> str:
         }).text
         simplified_formula = xmltodict.parse(simplified_formula)
         data = simplified_formula["queryresult"]["pod"]
-        data = [pod for pod in data if pod["@title"] == "Results"][0]
-        result = [subpod["plaintext"] for subpod in data["subpod"] if subpod["@title"] == ""][0]
-        steps = [subpod["plaintext"] for subpod in data["subpod"] if subpod["@title"] == "Possible intermediate steps"][0]
-        return f"**Resultado:**\n{result}\n\n**Pasos intermedios:**\n{steps}"
+        pods = get_pods_data(data)
+        return "\n\n".join(pods)
     response = client.chat.completions.create(
         messages=messages,
         model="gpt-4o"
