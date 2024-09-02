@@ -83,6 +83,10 @@ messages: list[dict[str, str]] = [
 ]
 
 
+class NecessaryImage(BaseModel):
+    necessary: bool = Field(description="Si es necesaria la imagen para entender el mensaje, debe ser True. Si ya se describe en el mensaje, debe ser False.")
+
+
 def get_pods_data(pods: list[dict[str, str]]) -> tuple[list[str], list[str]]:
     text_results = []
     image_results = []
@@ -141,9 +145,10 @@ async def output_text_func(new_msg: dict[str, str]) -> str | tuple[str, list[str
         data = simplified_formula["queryresult"]["pods"]
         text_results, image_results = get_pods_data(data)
         text_results = "\n\n".join(text_results)
+        imgs = [{"type": "image_url", "image_url": {"url": image}} for image in image_results]
         messages.append({"role": "user", "content": [
             {"type": "text", "text": f"<@WOlFRAM_SOLVER> \"{text_results}\""},
-            *[{"type": "image_url", "image_url": {"url": image}} for image in image_results]
+            *imgs
         ]})
         response = client.chat.completions.create(
             messages=messages,
@@ -151,6 +156,23 @@ async def output_text_func(new_msg: dict[str, str]) -> str | tuple[str, list[str
         )
         if response.choices[0].message.content:
             messages.append({"role": "assistant", "content": response.choices[0].message.content})
+            image_results = []
+            for img in imgs:
+                classify_image_needed = client.beta.chat.completions.parse(
+                    messages=[
+                        {"role": "system", "content": "Debes determinar si la imagen es necesaria para entender el mensaje, o si es relevante para el mensaje."},
+                        {"role": "assistant", "content": [
+                            {"type": "text", "text": response.choices[0].message.content},
+                            img
+                        ]}
+                    ],
+                    model="gpt-4o-mini",
+                    response_format=NecessaryImage
+                )
+                if not classify_image_needed.choices[0].message.parsed:
+                    continue
+                if classify_image_needed.choices[0].message.parsed.necessary:
+                    image_results.append(img["image_url"]["url"])
             return response.choices[0].message.content, image_results
         return ""
     response = client.chat.completions.create(
