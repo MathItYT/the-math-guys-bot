@@ -43,8 +43,13 @@ MATH_SYSTEM: Final[str] = "Si el mensaje empieza con <@WOLFRAM_SOLVER>, lo que s
     "que está resuelto con el sistema de Wolfram Alpha. WOLFRAM_SOLVER no es un usuario de Discord, por lo que " \
     "no puedes mencionarlo. No debes resolverlo, pues Wolfram Alpha ya lo resolvió. Solo debes responder de forma natural " \
     "como lo harías siempre con base en la respuesta que te dio Wolfram Alpha, por supuesto traducido al español y con humor. " \
-    "Si el mensaje no empieza con <@WOLFRAM_SOLVER>, entonces es un mensaje normal y debes responder de forma natural y humorística, " \
+    "Si el mensaje no empieza con <@WOLFRAM_SOLVER>, entonces es otro tipo de mensaje, " \
     "y puedes mencionar al usuario que te habló si es necesario, pero no a todos los usuarios con @everyone o @here, a menos que MathLike te lo pida."
+
+
+MEMBER_JOIN_SYSTEM: Final[str] = "Si el mensaje empieza con <@MEMBER_JOIN>, lo que sigue es un usuario que acaba de unirse al servidor. " \
+    "MEMBER_JOIN no es un usuario de Discord, por lo que no puedes mencionarlo. Debes mencionar al usuario que se unió al servidor " \
+    "y darle la bienvenida de forma natural y humorística. Si el mensaje no empieza con <@MEMBER_JOIN>, entonces es otro tipo de mensaje."
 
 
 messages: list[dict[str, str]] = [
@@ -122,11 +127,27 @@ def get_pods_data(pods: list[dict[str, str]]) -> tuple[list[str], list[str]]:
     return text_results, image_results
 
 
+async def handle_welcome_message(member: discord.Member, channel: discord.TextChannel) -> None:
+    global messages
+    prompt = f"<@MEMBER_JOIN> \"{member.author.mention} se ha unido al servidor. Dale la bienvenida.\""
+    prompt = {"role": "user", "content": prompt}
+    messages.append(prompt)
+    response = client.chat.completions.create(
+        messages=messages,
+        model="gpt-4o"
+    )
+    if not response.choices[0].message.content:
+        return
+    print(f"[TheMathGuysBot]: {response.choices[0].message.content}")
+    messages.append({"role": "assistant", "content": response.choices[0].message.content})
+    await channel.send(response.choices[0].message.content, allowed_mentions=discord.AllowedMentions.all())
+
+
 async def output_text_func(new_msg: dict[str, str]) -> str | tuple[str, list[str]]:
     global messages
     messages.append(new_msg)
     answer_or_not = client.beta.chat.completions.parse(
-        messages=[new_msg],
+        messages=messages,
         model="gpt-4o-mini",
         response_format=Classifier
     )
@@ -138,7 +159,7 @@ async def output_text_func(new_msg: dict[str, str]) -> str | tuple[str, list[str
         return ""
     if answer_or_not.parsed.type == "solve_math":
         tex = client.beta.chat.completions.parse(
-            messages=[new_msg],
+            messages=messages,
             model="gpt-4o-mini",
             response_format=ActionAndLaTeXOutput
         )
