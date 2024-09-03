@@ -147,7 +147,7 @@ async def output_text_func(new_msg: dict[str, str]) -> str | tuple[str, list[str
     global messages
     messages.append(new_msg)
     answer_or_not = client.beta.chat.completions.parse(
-        messages=messages,
+        messages=[new_msg],
         model="gpt-4o-mini",
         response_format=Classifier
     )
