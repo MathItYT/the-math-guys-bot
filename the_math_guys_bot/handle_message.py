@@ -7,6 +7,7 @@ from pydantic import BaseModel, Field
 import discord
 from io import BytesIO
 import requests
+from PIL import Image
 import os
 
 
@@ -103,7 +104,17 @@ def get_pods_data(pods: list[dict[str, str]]) -> tuple[list[str], list[str]]:
         else:
             text_results.append(title)
         if image:
-            image_results.append(image["src"])
+            src = image.get("src")
+            if not src:
+                continue
+            data = requests.get(src).content
+            image = Image.open(BytesIO(data))
+            image = image.convert("RGBA")
+            image_data = BytesIO()
+            image.save(image_data, "PNG")
+            image_data = base64.b64encode(image_data.getvalue()).decode()
+            image_results.append(f"data:image/png;base64,{image_data}")
+            image.close()
         subpods = pod.get("subpods", [])
         sub_text_results, sub_image_results = get_pods_data(subpods)
         text_results.extend(sub_text_results)
@@ -227,9 +238,9 @@ async def handle_message(message: Message) -> None:
         print(f"[TheMathGuysBot]: {text}")
         image_files = []
         for image in images:
-            response = requests.get(image)
-            image_data = BytesIO(response.content)
-            image_files.append(discord.File(image_data, filename="attachment.png"))
+            image_data = base64.b64decode(image.split(",")[1])
+            image_file = discord.File(BytesIO(image_data), filename="image.png")
+            image_files.append(image_file)
         await message.channel.send(text, files=image_files, allowed_mentions=discord.AllowedMentions.all())
     else:
         print(f"[TheMathGuysBot]: No response")
