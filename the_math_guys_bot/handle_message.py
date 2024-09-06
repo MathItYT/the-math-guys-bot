@@ -262,24 +262,22 @@ async def output_text_func(new_msg: dict[str, str]) -> str | tuple[str, list[str
             return ""
         print(f"Manim code: {code.parsed.code}")
         manim_messages.append({"role": "assistant", "parsed": {"code": code.parsed.code}, "content": '{"code":"' + code.parsed.code + '"}'})
-        with open("example.py", "w", encoding="utf-8") as f:
-            f.write(code.parsed.code)
         error = True
         iterations = 0
         while error and iterations < 5:
             try:
-                import example
-                example.ResultScene().render()
+                exec(code.parsed.code)
                 error = False
             except Exception:
                 _, _, tb = sys.exc_info()
                 tb_str = "".join(traceback.format_tb(tb))
                 extracted = traceback.extract_tb(tb)
                 for item in extracted:
-                    lineno = item.lineno
-                    print("Filename:", item.filename)
-                    if str(Path(item.filename)) == str(Path("example.py").absolute()):
+                    filename = item.filename
+                    print(filename)
+                    if filename == "<string>":
                         break
+                lineno = extracted[0].lineno
                 print("Number:", lineno)
                 error_line = code.parsed.code.split("\n")[lineno - 1]
                 manim_messages.append({
