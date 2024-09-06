@@ -11,6 +11,7 @@ from PIL import Image
 import subprocess
 import os
 import traceback
+import sys
 from pathlib import Path
 from shutil import rmtree
 
@@ -269,9 +270,10 @@ async def output_text_func(new_msg: dict[str, str]) -> str | tuple[str, list[str
             try:
                 subprocess.check_call(["manim", "example.py", "ResultScene"])
                 error = False
-            except subprocess.CalledProcessError as e:
-                tb_str = ''.join(traceback.format_tb(e.__traceback__))
-                lineno = e.__traceback__.tb_lineno
+            except subprocess.CalledProcessError:
+                _, _, tb = sys.exc_info()
+                tb_str = ''.join(traceback.format_tb(tb))
+                lineno = tb.tb_lineno
                 print("Number:", lineno)
                 error_line = code.parsed.code.split("\n")[lineno - 1]
                 manim_messages.append({
