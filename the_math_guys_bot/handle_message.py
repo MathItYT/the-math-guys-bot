@@ -239,8 +239,9 @@ async def output_text_func(new_msg: dict[str, str]) -> str | tuple[str, list[str
             return response.choices[0].message.content, image_results
         return ""
     if answer_or_not.parsed.type == "manim_animation":
+        msgs = [new_msg]
         code = client.beta.chat.completions.parse(
-            messages=[new_msg],
+            messages=msgs,
             model="ft:gpt-4o-2024-08-06:personal::A4JGjBOC",
             response_format=ManimCode
         )
@@ -250,9 +251,37 @@ async def output_text_func(new_msg: dict[str, str]) -> str | tuple[str, list[str
         if not code.parsed.code:
             return ""
         print(f"Manim code: {code.parsed.code}")
-        with open("example.py", "w") as f:
+        msgs.append({"role": "assistant", "code": code.parsed.code})
+        with open("example.py", "w", encoding="utf-8") as f:
             f.write(code.parsed.code)
-        subprocess.run(["manim", "example.py", "ResultScene", "--disable_caching"])
+        error = True
+        iterations = 0
+        while error and iterations < 5:
+            try:
+                subprocess.check_call(["manim", "example.py", "ResultScene"])
+                error = False
+            except subprocess.CalledProcessError as e:
+                msgs.append({
+                    "role": "user",
+                    "content": f"El código que mandaste tiene un error que dice: {e}. Por favor, corrige el código."
+                })
+                code = client.beta.chat.completions.parse(
+                    messages=msgs,
+                    model="ft:gpt-4o-2024-08-06:personal::A4JGjBOC",
+                    response_format=ManimCode
+                )
+                code = code.choices[0].message
+                if not code.parsed:
+                    return ""
+                if not code.parsed.code:
+                    return ""
+                print(f"Manim code: {code.parsed.code}")
+                msgs.append({"role": "assistant", "code": code.parsed.code})
+                with open("example.py", "w", encoding="utf-8") as f:
+                    f.write(code.parsed.code)
+                iterations += 1
+        if error:
+            return ""
         media_dir = Path("media")
         media_files = get_media_files_recursively(media_dir)
         messages.append({"role": "user", "content": f"<@MANIM> \"{code.parsed.code}\""})
