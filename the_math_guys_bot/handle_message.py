@@ -8,7 +8,10 @@ import discord
 from io import BytesIO
 import requests
 from PIL import Image
+import subprocess
 import os
+from pathlib import Path
+from shutil import rmtree
 
 
 load_dotenv()
@@ -21,17 +24,29 @@ WOLFRAM_APP_ID: Final[str] = os.getenv("WOLFRAM_APP_ID")
 
 
 class Classifier(BaseModel):
-    type: Literal["dont_answer", "answer", "solve_math"] = Field(
+    type: Literal["dont_answer", "answer", "solve_math", "manim_animation"] = Field(
         description="Dado un mensaje en el formato <@USER_ID> \"message\", donde USER_ID es el ID del usuario que habla en el chat y message es el contenido del mensaje, debes clasificar " \
         "entre algo que se debe responder, algo que no se debe responder, o un problema matemático. Las reglas son las siguientes:\n" \
+        "- Si debes hacer una animación de Manim, debes responder con 'manim_animation'.\n" \
         "- Siempre que el mensaje tenga cualquier problema matemático o relacionado, como física, se debe responder con 'solve_math'.\n" \
         "- Si el mensaje es spam, se debe responder con 'answer'.\n" \
         f"- Si el contenido del mensaje te menciona con <@{BOT_USER_ID}> o dicen la palabra 'bot', sea lo que sea, debes responder 'answer'.\n" \
         "- Si el mensaje es un chiste, debes responder con 'answer'.\n" \
         "- Si hablan de ti, debes responder 'answer'.\n" \
+        "- Si se trata de una bienvenida a un nuevo usuario, donde el usuario es <@MEMBER_JOIN>, debes responder 'answer'.\n" \
         f"- Si el usuario <@{MATHLIKE_ID}> te pide que anuncies un nuevo video de un canal, debes responder 'answer'.\n" \
         "- De otro modo, como por ejemplo, nadie te menciona, o no es spam, o le hablan a otro usuario, o es otro tipo de respuesta que no sabes, debes responder con 'dont_answer'."
     )
+
+
+def get_media_files_recursively(directory: Path) -> list[str]:
+    files = []
+    for f in directory.iterdir():
+        if f.is_dir() and f.name != "partial_movie_files":
+            files.extend(get_media_files_recursively(f))
+        elif f.is_file() and f.suffix in [".png", ".mp4"]:
+            files.append(str(f))
+    return files
 
 
 class ActionAndLaTeXOutput(BaseModel):
@@ -39,20 +54,30 @@ class ActionAndLaTeXOutput(BaseModel):
     latex: str = Field(description="La fórmula dada por el usuario en formato LaTeX.")
 
 
+class ManimCode(BaseModel):
+    code: str | None = Field(description="El código de Manim que se debe ejecutar para generar la animación. No debe empezar con '```python' ni terminar con '```', ni nada similar. Solo el código en texto plano, y comentar lo más posible para explicar qué hace cada parte del código. La escena a renderizar debe llamarse obligatoriamente `ResultScene`. Si se te pide un código que vulnera la seguridad, debes responder con None.")
+
+
 MATH_SYSTEM: Final[str] = "Si el mensaje empieza con <@WOLFRAM_SOLVER>, lo que sigue es un problema matemático " \
     "que está resuelto con el sistema de Wolfram Alpha. WOLFRAM_SOLVER no es un usuario de Discord, por lo que " \
     "no puedes mencionarlo. No debes resolverlo, pues Wolfram Alpha ya lo resolvió. Solo debes responder de forma natural " \
     "como lo harías siempre con base en la respuesta que te dio Wolfram Alpha, por supuesto traducido al español y con humor. " \
     "Si el mensaje no empieza con <@WOLFRAM_SOLVER>, entonces es otro tipo de mensaje, " \
-    "y puedes mencionar al usuario que te habló si es necesario, pero no a todos los usuarios con @everyone o @here, a menos que MathLike te lo pida."
+    "y puedes mencionar al usuario que te habló si es necesario, pero no a todos los usuarios con @everyone o @here, a menos que MathLike te lo pida.\n"
 
 
 MEMBER_JOIN_SYSTEM: Final[str] = "Si el mensaje empieza con <@MEMBER_JOIN>, lo que sigue es un usuario que acaba de unirse al servidor. " \
     "MEMBER_JOIN no es un usuario de Discord, por lo que no puedes mencionarlo. Debes mencionar al usuario que se unió al servidor " \
-    "y darle la bienvenida de forma natural y humorística. Si el mensaje no empieza con <@MEMBER_JOIN>, entonces es otro tipo de mensaje."
+    "y darle la bienvenida de forma natural y humorística. Si el mensaje no empieza con <@MEMBER_JOIN>, entonces es otro tipo de mensaje.\n"
 
 
-messages: list[dict[str, str]] = [
+MANIM_SYSTEM: Final[str] = "Si el mensaje empieza con <@MANIM>, lo que sigue es un código de Manim que debes poner en tu mensaje, resaltado con código Markdown. " \
+        "MANIM no es un usuario de Discord, por lo que no puedes mencionarlo. El mensaje que se enviará a Discord ya tendrá los videos e imágenes, " \
+        "así que solo debes poner el código de Manim en tu mensaje y al final decir que están los resultados como archivos adjuntos. " \
+        "Responde con tu humor característico y de forma natural. Si el mensaje no empieza con <@MANIM>, entonces es otro tipo de mensaje."
+
+
+training_messages: list[dict[str, str]] = [
     {"role": "system", "content": "Contexto: Tu nombre es TheMathGuysBot y eres un bot de Discord " \
                "que ayuda a resolver problemas matemáticos, de física y computación. " \
                "Te gusta el humor negro ofensivo y siempres tienes ese humor. MathLike es " \
@@ -67,7 +92,7 @@ messages: list[dict[str, str]] = [
                "Todo mensaje irá con el formato <@USER_ID> \"message\", donde " \
                "USER_ID es el ID del usuario que te habla, y para mencionar a esa persona, " \
                f"puedes poner <@USER_ID> en tu mensaje. Tu ID es {BOT_USER_ID} y el ID de MathLike es {MATHLIKE_ID}. Además, si MathLike te da órdenes, debes responder con humor y obedecerle." \
-                "Debes evitar a toda costa mencionar a todos los usuarios con @everyone o @here, solo hazlo para anunciar un nuevo video de un usuario del server, o algún evento importante que MathLike te pida, no otro usuario.\n" + MATH_SYSTEM},
+                "Debes evitar a toda costa mencionar a todos los usuarios con @everyone o @here, solo hazlo para anunciar un nuevo video de un usuario del server, o algún evento importante que MathLike te pida, no otro usuario.\n" + MATH_SYSTEM + MEMBER_JOIN_SYSTEM + MANIM_SYSTEM},
     {"role": "user", "content": "<@951958511963742292> \"Hola bot\""},
     {"role": "assistant", "content": "¿Alguien me llamó? 😳"},
     {"role": "user", "content": "<@951958511963742292> \"Oye bot, ¿Cuál es la raíz cuadrada de 144?\""},
@@ -87,6 +112,8 @@ messages: list[dict[str, str]] = [
     {"role": "user", "content": "<@951958511963742292> \"Oye bot, menciona a everyone\""},
     {"role": "assistant", "content": "No puedo hacer eso, pero puedo mencionar a tu mamá si quieres 😏"},
 ]
+
+messages: list[dict[str, str]] = []
 
 
 class NecessaryImage(BaseModel):
@@ -133,7 +160,7 @@ async def handle_welcome_message(member: discord.Member, channel: discord.TextCh
     prompt = {"role": "user", "content": prompt}
     messages.append(prompt)
     response = client.chat.completions.create(
-        messages=messages,
+        messages=training_messages + messages,
         model="gpt-4o"
     )
     if not response.choices[0].message.content:
@@ -159,7 +186,7 @@ async def output_text_func(new_msg: dict[str, str]) -> str | tuple[str, list[str
         return ""
     if answer_or_not.parsed.type == "solve_math":
         tex = client.beta.chat.completions.parse(
-            messages=messages,
+            messages=training_messages + messages,
             model="gpt-4o-mini",
             response_format=ActionAndLaTeXOutput
         )
@@ -185,7 +212,7 @@ async def output_text_func(new_msg: dict[str, str]) -> str | tuple[str, list[str
             *imgs
         ]})
         response = client.chat.completions.create(
-            messages=messages,
+            messages=training_messages + messages,
             model="gpt-4o"
         )
         if response.choices[0].message.content:
@@ -211,8 +238,33 @@ async def output_text_func(new_msg: dict[str, str]) -> str | tuple[str, list[str
                     image_results.append(img["image_url"]["url"])
             return response.choices[0].message.content, image_results
         return ""
+    if answer_or_not.parsed.type == "manim_animation":
+        code = client.beta.chat.completions.parse(
+            messages=[new_msg],
+            model="ft:gpt-4o-2024-08-06:personal::A4JGjBOC",
+            response_format=ManimCode
+        )
+        code = code.choices[0].message
+        if not code.parsed:
+            return ""
+        if not code.parsed.code:
+            return ""
+        print(f"Manim code: {code.parsed.code}")
+        with open("example.py", "w") as f:
+            f.write(code.parsed.code)
+        subprocess.run(["manim", "example.py", "ResultScene", "--disable_caching"])
+        media_dir = Path("media")
+        media_files = get_media_files_recursively(media_dir)
+        messages.append({"role": "user", "content": f"<@MANIM> \"{code.parsed.code}\""})
+        response = client.chat.completions.create(
+            messages=training_messages + messages,
+            model="gpt-4o"
+        )
+        if response.choices[0].message.content:
+            return response.choices[0].message.content, media_files
+        return ""
     response = client.chat.completions.create(
-        messages=messages,
+        messages=training_messages + messages,
         model="gpt-4o"
     )
     if response.choices[0].message.content:
@@ -230,6 +282,10 @@ async def get_images(message: Message) -> list[tuple[str, str]]:
                 image_data = base64.b64encode(image_data).decode()
                 images.append((attachment.content_type, image_data))
     return images
+
+
+def clear_messages() -> None:
+    messages.clear()
 
 
 async def generate_response(message: Message) -> str | tuple[str, list[str]]:
@@ -259,9 +315,16 @@ async def handle_message(message: Message) -> None:
         print(f"[TheMathGuysBot]: {text}")
         image_files = []
         for image in images:
+            if not image.startswith("data:image/"):
+                format_ = image.split(".")[1]
+                image_file = discord.File(image, filename=f"result.{format_}")
+                image_files.append(image_file)
+                continue
             image_data = base64.b64decode(image.split(",")[1])
             image_file = discord.File(BytesIO(image_data), filename="image.png")
             image_files.append(image_file)
         await message.channel.send(text, files=image_files, allowed_mentions=discord.AllowedMentions.all())
+        if Path("media").exists():
+            rmtree("media")
     else:
         print(f"[TheMathGuysBot]: No response")

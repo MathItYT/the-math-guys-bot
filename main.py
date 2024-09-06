@@ -1,8 +1,9 @@
 from dotenv import load_dotenv
 import os
 from typing import Final
-from the_math_guys_bot.handle_message import handle_message, handle_welcome_message
+from the_math_guys_bot.handle_message import handle_message, handle_welcome_message, clear_messages
 import discord
+from discord.ext import commands
 
 
 load_dotenv()
@@ -40,6 +41,15 @@ async def on_member_join(member: discord.Member):
     print(f"{member} has joined the server.")
     general = bot.get_channel(GENERAL_ID)
     await handle_welcome_message(member, general)
+
+
+@bot.command(name="clear-history", help="Clears the conversation history with the bot. Only MathLike can execute this command.")
+async def clear_history(ctx: commands.Context):
+    if ctx.message.author.id == MATHLIKE_ID:
+        clear_messages()
+        ctx.send("El historial de conversación ha sido borrado.")
+    else:
+        ctx.send("No tienes permisos para ejecutar este comando.")
 
 
 def main():

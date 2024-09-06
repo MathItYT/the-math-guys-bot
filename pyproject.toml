@@ -12,6 +12,7 @@ py-cord = {git = "https://github.com/Pycord-Development/pycord.git", branch="mas
 python-youtube = "^0.9.5"
 openai = "^1.43.0"
 pillow = "^10.4.0"
+manim = "^0.18.1"
 
 
 [tool.poetry.group.dev.dependencies]

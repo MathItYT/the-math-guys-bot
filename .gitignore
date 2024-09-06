@@ -8,4 +8,5 @@ media
 *.jpeg
 *.bmp
 client_secret.json
+example.py
 bounties.json
