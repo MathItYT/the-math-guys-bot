@@ -8,7 +8,7 @@ import discord
 from io import BytesIO
 import requests
 from PIL import Image
-import subprocess
+import manim
 import os
 import traceback
 import sys
@@ -266,7 +266,7 @@ async def output_text_func(new_msg: dict[str, str]) -> str | tuple[str, list[str
         iterations = 0
         while error and iterations < 5:
             try:
-                exec(code.parsed.code + "\n\nResultScene().render()")
+                exec(code.parsed.code + "\n\nResultScene().render()", manim.__dict__)
                 error = False
             except Exception:
                 _, _, tb = sys.exc_info()
