@@ -272,8 +272,8 @@ async def output_text_func(new_msg: dict[str, str]) -> str | tuple[str, list[str
                 error = False
             except subprocess.CalledProcessError:
                 _, _, tb = sys.exc_info()
-                tb_str = ''.join(traceback.format_tb(tb))
-                lineno = tb.tb_lineno
+                tb_str = "".join(traceback.format_tb(tb))
+                lineno = [line for line in traceback.extract_tb(tb) if line.filename == "example.py"][0].lineno
                 print("Number:", lineno)
                 error_line = code.parsed.code.split("\n")[lineno - 1]
                 manim_messages.append({
