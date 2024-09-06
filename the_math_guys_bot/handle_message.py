@@ -187,7 +187,7 @@ async def output_text_func(new_msg: dict[str, str]) -> str | tuple[str, list[str
         return ""
     print(f"Type: {answer_or_not.parsed.type}")
     print(f"Content: {answer_or_not.content}")
-    classifier_messages.append({"role": "assistant", "parsed": {"type": answer_or_not.parsed.type}})
+    classifier_messages.append({"role": "assistant", "parsed": {"type": answer_or_not.parsed.type}, "content": '{"type":"' + answer_or_not.parsed.type + '"}'})
     if answer_or_not.parsed.type == "dont_answer":
         return ""
     if answer_or_not.parsed.type == "solve_math":
@@ -204,7 +204,7 @@ async def output_text_func(new_msg: dict[str, str]) -> str | tuple[str, list[str
         action = formula.parsed.action
         print(f"Formula: {tex_string}")
         print(f"Action: {action}")
-        math_messages.append({"role": "assistant", "parsed": {"latex": tex_string, "action": action}})
+        math_messages.append({"role": "assistant", "parsed": {"latex": tex_string, "action": action}, "content": '{"latex":"' + tex_string + '","action":"' + action + '"}'})
         simplified_formula = requests.get(f"http://api.wolframalpha.com/v2/query", params={
             "input": f"{action} {tex_string}",
             "appid": WOLFRAM_APP_ID,
@@ -259,7 +259,7 @@ async def output_text_func(new_msg: dict[str, str]) -> str | tuple[str, list[str
         if not code.parsed.code:
             return ""
         print(f"Manim code: {code.parsed.code}")
-        manim_messages.append({"role": "assistant", "parsed": {"code": code.parsed.code}})
+        manim_messages.append({"role": "assistant", "parsed": {"code": code.parsed.code}, "content": '{"code":"' + code.parsed.code + '"}'})
         with open("example.py", "w", encoding="utf-8") as f:
             f.write(code.parsed.code)
         error = True
@@ -284,7 +284,7 @@ async def output_text_func(new_msg: dict[str, str]) -> str | tuple[str, list[str
                 if not code.parsed.code:
                     return ""
                 print(f"Manim code: {code.parsed.code}")
-                manim_messages.append({"role": "assistant", "parsed": {"code": code.parsed.code}})
+                manim_messages.append({"role": "assistant", "parsed": {"code": code.parsed.code}, "content": '{"code":"' + code.parsed.code + '"}'})
                 with open("example.py", "w", encoding="utf-8") as f:
                     f.write(code.parsed.code)
                 iterations += 1
