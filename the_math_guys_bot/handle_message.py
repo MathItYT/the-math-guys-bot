@@ -186,6 +186,7 @@ async def output_text_func(new_msg: dict[str, str]) -> str | tuple[str, list[str
     if not answer_or_not.parsed:
         return ""
     print(f"Type: {answer_or_not.parsed.type}")
+    print(f"Content: {answer_or_not.content}")
     classifier_messages.append({"role": "assistant", "parsed": {"type": answer_or_not.parsed.type}})
     if answer_or_not.parsed.type == "dont_answer":
         return ""
