@@ -316,7 +316,7 @@ async def handle_message(message: Message) -> None:
         image_files = []
         for image in images:
             if not image.startswith("data:image/"):
-                format_ = image.split(".")[1]
+                format_ = image.split(".")[-1]
                 image_file = discord.File(image, filename=f"result.{format_}")
                 image_files.append(image_file)
                 continue
