@@ -271,7 +271,7 @@ async def output_text_func(new_msg: dict[str, str]) -> str | tuple[str, list[str
             except subprocess.CalledProcessError as e:
                 manim_messages.append({
                     "role": "user",
-                    "content": f"El código que mandaste tiene un error que dice: {e}. Por favor, corrige el código."
+                    "content": f"El código que mandaste tiene un error: {e.__traceback__}. Por favor, arréglalo."
                 })
                 code = client.beta.chat.completions.parse(
                     messages=manim_messages,
