@@ -251,7 +251,7 @@ async def output_text_func(new_msg: dict[str, str]) -> str | tuple[str, list[str
         if not code.parsed.code:
             return ""
         print(f"Manim code: {code.parsed.code}")
-        msgs.append({"role": "assistant", "code": code.parsed.code})
+        msgs.append({"role": "assistant", "parsed": {"code": code.parsed.code}})
         with open("example.py", "w", encoding="utf-8") as f:
             f.write(code.parsed.code)
         error = True
