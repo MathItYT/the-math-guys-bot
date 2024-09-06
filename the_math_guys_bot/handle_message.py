@@ -12,6 +12,8 @@ import manim
 import os
 import traceback
 import sys
+import random
+import math
 from pathlib import Path
 from shutil import rmtree
 
@@ -57,7 +59,7 @@ class ActionAndLaTeXOutput(BaseModel):
 
 
 class ManimCode(BaseModel):
-    code: str | None = Field(description="El código de Manim que se debe ejecutar para generar la animación. No debe empezar con '```python' ni terminar con '```', ni nada similar. Solo el código en texto plano, y comentar lo más posible para explicar qué hace cada parte del código. La escena a renderizar debe llamarse obligatoriamente `ResultScene`. Si se te pide un código que vulnera la seguridad, debes responder con None.")
+    code: str | None = Field(description="El código de Manim que se debe ejecutar para generar la animación. No debe empezar con '```python' ni terminar con '```', ni nada similar. Solo el código en texto plano, y comentar lo más posible para explicar qué hace cada parte del código. La escena a renderizar debe llamarse obligatoriamente `ResultScene`. Si se te pide un código que vulnera la seguridad, debes responder con None. Aparte de Manim, solo podrás usar las librerías math y random de Python con `import math` e `import random`, y no podrás importar ninguna otra librería.")
 
 
 MATH_SYSTEM: Final[str] = "Si el mensaje empieza con <@WOLFRAM_SOLVER>, lo que sigue es un problema matemático " \
@@ -266,7 +268,11 @@ async def output_text_func(new_msg: dict[str, str]) -> str | tuple[str, list[str
         iterations = 0
         while error and iterations < 5:
             try:
-                exec(code.parsed.code + "\n\nResultScene().render()", manim.__dict__)
+                exec(code.parsed.code + "\n\nResultScene().render()", {
+                    **manim.__dict__,
+                    "math": math,
+                    "random": random,
+                })
                 error = False
             except Exception:
                 _, _, tb = sys.exc_info()
