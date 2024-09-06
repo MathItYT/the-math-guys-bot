@@ -277,7 +277,7 @@ async def output_text_func(new_msg: dict[str, str]) -> str | tuple[str, list[str
                 for item in extracted:
                     lineno = item.lineno
                     print("Filename:", item.filename)
-                    if item.filename == os.path.abspath("example.py"):
+                    if Path(item.filename).name == "example.py":
                         break
                 print("Number:", lineno)
                 error_line = code.parsed.code.split("\n")[lineno - 1]
