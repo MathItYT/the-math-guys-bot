@@ -274,10 +274,10 @@ async def output_text_func(new_msg: dict[str, str]) -> str | tuple[str, list[str
                 extracted = traceback.extract_tb(tb)
                 for item in extracted:
                     filename = item.filename
+                    lineno = item.lineno
                     print(filename)
                     if filename == "<string>":
                         break
-                lineno = extracted[0].lineno
                 print("Number:", lineno)
                 error_line = code.parsed.code.split("\n")[lineno - 1]
                 manim_messages.append({
