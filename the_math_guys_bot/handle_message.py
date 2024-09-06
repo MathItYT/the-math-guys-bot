@@ -266,7 +266,7 @@ async def output_text_func(new_msg: dict[str, str]) -> str | tuple[str, list[str
         iterations = 0
         while error and iterations < 5:
             try:
-                exec(code.parsed.code)
+                exec(code.parsed.code + "\n\nResultScene().render()")
                 error = False
             except Exception:
                 _, _, tb = sys.exc_info()
@@ -296,8 +296,6 @@ async def output_text_func(new_msg: dict[str, str]) -> str | tuple[str, list[str
                     return ""
                 print(f"Manim code: {code.parsed.code}")
                 manim_messages.append({"role": "assistant", "parsed": {"code": code.parsed.code}, "content": '{"code":"' + code.parsed.code + '"}'})
-                with open("example.py", "w", encoding="utf-8") as f:
-                    f.write(code.parsed.code)
                 iterations += 1
         if error:
             return ""
