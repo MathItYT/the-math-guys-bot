@@ -272,9 +272,8 @@ async def output_text_func(new_msg: dict[str, str]) -> str | tuple[str, list[str
             except subprocess.CalledProcessError as e:
                 tb_str = ''.join(traceback.format_tb(e.__traceback__))
                 lineno = e.__traceback__.tb_lineno
-                with open("example.py", "r", encoding="utf-8") as f:
-                    lines = f.read().split("\n")
-                error_line = lines[lineno - 1]
+                print("Number:", lineno)
+                error_line = code.parsed.code.split("\n")[lineno - 1]
                 manim_messages.append({
                     "role": "user",
                     "content": f"El código que mandaste tiene un error con el siguiente traceback:\n{tb_str}\nFue en la línea que dice:\n{error_line}\nPor favor, corrige el error."
