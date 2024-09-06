@@ -10,6 +10,7 @@ import requests
 from PIL import Image
 import subprocess
 import os
+import traceback
 from pathlib import Path
 from shutil import rmtree
 
@@ -269,9 +270,14 @@ async def output_text_func(new_msg: dict[str, str]) -> str | tuple[str, list[str
                 subprocess.check_call(["manim", "example.py", "ResultScene"])
                 error = False
             except subprocess.CalledProcessError as e:
+                tb_str = ''.join(traceback.format_tb(e.__traceback__))
+                lineno = e.__traceback__.tb_lineno
+                with open("example.py", "r", encoding="utf-8") as f:
+                    lines = f.read().split("\n")
+                error_line = lines[lineno - 1]
                 manim_messages.append({
                     "role": "user",
-                    "content": f"El código que mandaste tiene un error: {e.__traceback__}. Por favor, arréglalo."
+                    "content": f"El código que mandaste tiene un error con el siguiente traceback:\n{tb_str}\nFue en la línea que dice:\n{error_line}\nPor favor, corrige el error."
                 })
                 code = client.beta.chat.completions.parse(
                     messages=manim_messages,
