@@ -1,6 +1,6 @@
 [phases.setup]
 nixPkgs = ['...']
-aptPkgs = ["build-essential", "python3-dev", "libcairo2-dev", "libpango1.0-dev", "ffmpeg", "texlive-full", "git", "curl"]
+aptPkgs = ["build-essential", "python3-dev", "libcairo2-dev", "libpango1.0-dev", "ffmpeg", "texlive-full", "git", "curl", "libx11-dev"]
 
 [phases.install]
 cmds = ['python3 -m venv .venv', 'source .venv/bin/activate && pip install -e .']
