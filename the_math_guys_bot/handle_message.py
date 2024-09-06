@@ -114,6 +114,9 @@ training_messages: list[dict[str, str]] = [
 ]
 
 messages: list[dict[str, str]] = []
+math_messages: list[dict[str, str]] = []
+manim_messages: list[dict[str, str]] = []
+classifier_messages: list[dict[str, str]] = []
 
 
 class NecessaryImage(BaseModel):
@@ -171,10 +174,11 @@ async def handle_welcome_message(member: discord.Member, channel: discord.TextCh
 
 
 async def output_text_func(new_msg: dict[str, str]) -> str | tuple[str, list[str]]:
-    global messages
+    global messages, manim_messages, math_messages, classifier_messages
     messages.append(new_msg)
+    classifier_messages.append(new_msg)
     answer_or_not = client.beta.chat.completions.parse(
-        messages=[new_msg],
+        messages=classifier_messages,
         model="gpt-4o-mini",
         response_format=Classifier
     )
@@ -182,11 +186,13 @@ async def output_text_func(new_msg: dict[str, str]) -> str | tuple[str, list[str
     if not answer_or_not.parsed:
         return ""
     print(f"Type: {answer_or_not.parsed.type}")
+    classifier_messages.append({"role": "assistant", "parsed": {"type": answer_or_not.parsed.type}})
     if answer_or_not.parsed.type == "dont_answer":
         return ""
     if answer_or_not.parsed.type == "solve_math":
+        math_messages.append(new_msg)
         tex = client.beta.chat.completions.parse(
-            messages=training_messages + messages,
+            messages=math_messages,
             model="gpt-4o-mini",
             response_format=ActionAndLaTeXOutput
         )
@@ -197,6 +203,7 @@ async def output_text_func(new_msg: dict[str, str]) -> str | tuple[str, list[str
         action = formula.parsed.action
         print(f"Formula: {tex_string}")
         print(f"Action: {action}")
+        math_messages.append({"role": "assistant", "parsed": {"latex": tex_string, "action": action}})
         simplified_formula = requests.get(f"http://api.wolframalpha.com/v2/query", params={
             "input": f"{action} {tex_string}",
             "appid": WOLFRAM_APP_ID,
@@ -239,9 +246,9 @@ async def output_text_func(new_msg: dict[str, str]) -> str | tuple[str, list[str
             return response.choices[0].message.content, image_results
         return ""
     if answer_or_not.parsed.type == "manim_animation":
-        msgs = [new_msg]
+        manim_messages.append(new_msg)
         code = client.beta.chat.completions.parse(
-            messages=msgs,
+            messages=manim_messages,
             model="ft:gpt-4o-2024-08-06:personal::A4JGjBOC",
             response_format=ManimCode
         )
@@ -251,7 +258,7 @@ async def output_text_func(new_msg: dict[str, str]) -> str | tuple[str, list[str
         if not code.parsed.code:
             return ""
         print(f"Manim code: {code.parsed.code}")
-        msgs.append({"role": "assistant", "parsed": {"code": code.parsed.code}})
+        manim_messages.append({"role": "assistant", "parsed": {"code": code.parsed.code}})
         with open("example.py", "w", encoding="utf-8") as f:
             f.write(code.parsed.code)
         error = True
@@ -261,12 +268,12 @@ async def output_text_func(new_msg: dict[str, str]) -> str | tuple[str, list[str
                 subprocess.check_call(["manim", "example.py", "ResultScene"])
                 error = False
             except subprocess.CalledProcessError as e:
-                msgs.append({
+                manim_messages.append({
                     "role": "user",
                     "content": f"El código que mandaste tiene un error que dice: {e}. Por favor, corrige el código."
                 })
                 code = client.beta.chat.completions.parse(
-                    messages=msgs,
+                    messages=manim_messages,
                     model="ft:gpt-4o-2024-08-06:personal::A4JGjBOC",
                     response_format=ManimCode
                 )
@@ -276,7 +283,7 @@ async def output_text_func(new_msg: dict[str, str]) -> str | tuple[str, list[str
                 if not code.parsed.code:
                     return ""
                 print(f"Manim code: {code.parsed.code}")
-                msgs.append({"role": "assistant", "code": code.parsed.code})
+                manim_messages.append({"role": "assistant", "code": code.parsed.code})
                 with open("example.py", "w", encoding="utf-8") as f:
                     f.write(code.parsed.code)
                 iterations += 1
