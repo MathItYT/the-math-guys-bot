@@ -175,7 +175,10 @@ async def handle_welcome_message(member: discord.Member, channel: discord.TextCh
         return
     print(f"[TheMathGuysBot]: {response.choices[0].message.content}")
     messages.append({"role": "assistant", "content": response.choices[0].message.content})
-    await channel.send(response.choices[0].message.content, allowed_mentions=discord.AllowedMentions.all())
+    content = response.choices[0].message.content
+    if len(content) > 2000:
+        content = content[:2000]
+    await channel.send(content, allowed_mentions=discord.AllowedMentions.all())
 
 
 async def output_text_func(new_msg: dict[str, str]) -> str | tuple[str, list[str]]:
@@ -358,6 +361,8 @@ async def handle_message(message: Message) -> None:
     response = await generate_response(message)
     if response and isinstance(response, str):
         print(f"[TheMathGuysBot]: {response}")
+        if len(response) > 2000:
+            response = response[:2000]
         await message.channel.send(response, allowed_mentions=discord.AllowedMentions.all())
     elif response and isinstance(response, tuple):
         text, images = response
@@ -372,6 +377,8 @@ async def handle_message(message: Message) -> None:
             image_data = base64.b64decode(image.split(",")[1])
             image_file = discord.File(BytesIO(image_data), filename="image.png")
             image_files.append(image_file)
+        if len(text) > 2000:
+            text = text[:2000]
         await message.channel.send(text, files=image_files, allowed_mentions=discord.AllowedMentions.all())
         if Path("media").exists():
             rmtree("media")
