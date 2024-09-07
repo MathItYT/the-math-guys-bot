@@ -291,6 +291,7 @@ async def output_text_func(new_msg: dict[str, str]) -> str | tuple[str, list[str
         error = True
         while error:
             try:
+                manim.config.disable_caching = True
                 exec(code.parsed.code + "\n\nResultScene().render()", {
                     **manim.__dict__,
                     "math": math,
