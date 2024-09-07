@@ -265,8 +265,7 @@ async def output_text_func(new_msg: dict[str, str]) -> str | tuple[str, list[str
         print(f"Manim code: {code.parsed.code}")
         manim_messages.append({"role": "assistant", "parsed": {"code": code.parsed.code}, "content": '{"code":"' + code.parsed.code + '"}'})
         error = True
-        iterations = 0
-        while error and iterations < 5:
+        while error:
             try:
                 exec(code.parsed.code + "\n\nResultScene().render()", {
                     **manim.__dict__,
@@ -295,11 +294,10 @@ async def output_text_func(new_msg: dict[str, str]) -> str | tuple[str, list[str
                     return ""
                 if not code.parsed.code:
                     return ""
+                if Path("media").exists():
+                    rmtree("media")
                 print(f"Manim code: {code.parsed.code}")
                 manim_messages.append({"role": "assistant", "parsed": {"code": code.parsed.code}, "content": '{"code":"' + code.parsed.code + '"}'})
-                iterations += 1
-        if error:
-            return ""
         media_dir = Path("media")
         media_files = get_media_files_recursively(media_dir)
         messages.append({"role": "user", "content": f"<@MANIM> \"{code.parsed.code}\""})
