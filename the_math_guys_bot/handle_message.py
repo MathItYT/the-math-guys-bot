@@ -60,7 +60,7 @@ class ActionAndLaTeXOutput(BaseModel):
 
 
 class ManimCode(BaseModel):
-    code: str | None = Field(description="El código de Manim que se debe ejecutar para generar la animación. No debe empezar con '```python' ni terminar con '```', ni nada similar. Solo el código en texto plano, y comentar lo más posible para explicar qué hace cada parte del código. La escena a renderizar debe llamarse obligatoriamente `ResultScene`. Si se te pide un código que vulnera la seguridad, debes responder con None. Aparte de Manim, solo podrás usar las librerías math, random y NumPy de Python con `import math`, `import random` e `import numpy as np`, y no podrás importar ninguna otra librería. Recuerda que Manim usa coordenadas tridimensionales.")
+    code: str | None = Field(description="El código de Manim que se debe ejecutar para generar la animación. No debe empezar con '```python' ni terminar con '```', ni nada similar. Solo el código en texto plano, y comentar lo más posible para explicar qué hace cada parte del código. La escena a renderizar debe llamarse obligatoriamente `ResultScene`. Si se te pide un código que vulnera la seguridad, debes responder con None. Aparte de Manim, solo podrás usar las librerías math, random y NumPy de Python con `import math`, `import random` e `import numpy as np`, y no podrás importar ninguna otra librería. Recuerda que Manim usa coordenadas tridimensionales, entonces si es algo bidimensional, deberás agregar un 0. Además, Manim usa NumPy para posicionamiento.")
 
 
 MATH_SYSTEM: Final[str] = "Si el mensaje empieza con <@WOLFRAM_SOLVER>, lo que sigue es un problema matemático " \
