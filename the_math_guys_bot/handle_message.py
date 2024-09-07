@@ -16,7 +16,6 @@ import random
 import math
 from pathlib import Path
 from shutil import rmtree
-import numpy as np
 
 
 load_dotenv()
@@ -26,6 +25,7 @@ MATHLIKE_USER_ID: Final[int] = 546393436668952663
 BOT_USER_ID: Final[int] = 1194231765175369788
 MATHLIKE_ID: Final[int] = 546393436668952663
 WOLFRAM_APP_ID: Final[str] = os.getenv("WOLFRAM_APP_ID")
+MAX_MESSAGES_LENGTH: Final[int] = 50
 
 
 class Classifier(BaseModel):
@@ -183,6 +183,26 @@ async def handle_welcome_message(member: discord.Member, channel: discord.TextCh
 
 async def output_text_func(new_msg: dict[str, str]) -> str | tuple[str, list[str]]:
     global messages, manim_messages, math_messages, classifier_messages
+    if len(messages) >= MAX_MESSAGES_LENGTH:
+        for i, msg in enumerate(messages):
+            if msg["role"] == "user":
+                messages = messages[i:]
+                break
+    if len(math_messages) >= MAX_MESSAGES_LENGTH:
+        for i, msg in enumerate(math_messages):
+            if msg["role"] == "user":
+                math_messages = math_messages[i:]
+                break
+    if len(manim_messages) >= MAX_MESSAGES_LENGTH:
+        for i, msg in enumerate(manim_messages):
+            if msg["role"] == "user":
+                messages = messages[i:]
+                break
+    if len(classifier_messages) >= MAX_MESSAGES_LENGTH:
+        for i, msg in enumerate(classifier_messages):
+            if msg["role"] == "user":
+                classifier_messages = classifier_messages[i:]
+                break
     messages.append(new_msg)
     classifier_messages.append(new_msg)
     answer_or_not = client.beta.chat.completions.parse(
