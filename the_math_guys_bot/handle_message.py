@@ -33,7 +33,7 @@ class Classifier(BaseModel):
         description="Dado un mensaje en el formato <@USER_ID> \"message\", donde USER_ID es el ID del usuario que habla en el chat y message es el contenido del mensaje, debes clasificar " \
         "entre algo que se debe responder, algo que no se debe responder, o un problema matemático. Las reglas son las siguientes:\n" \
         "- Si debes hacer una animación de Manim, debes responder con 'manim_animation'.\n" \
-        "- Siempre que el mensaje tenga cualquier problema matemático o relacionado, como física, se debe responder con 'solve_math'.\n" \
+        "- Siempre que el mensaje tenga cualquier problema matemático o relacionado, como física, y aún más si dice que es para Wolfram, pero si no, igual consideras que se debe responder con 'solve_math'.\n" \
         "- Si el mensaje es spam, se debe responder con 'answer'.\n" \
         f"- Si el contenido del mensaje te menciona con <@{BOT_USER_ID}> o dicen la palabra 'bot', sea lo que sea, debes responder 'answer'.\n" \
         "- Si el mensaje es un chiste, debes responder con 'answer'.\n" \
