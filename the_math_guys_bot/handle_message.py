@@ -134,6 +134,7 @@ def get_pods_data(data: list[dict[str, str]]) -> tuple[list[str], list[str]]:
     text_results = []
     image_results = []
     pods = data.get("pods") or [data.get("pod")]
+    print("Data:", data)
     if len(pods) == 1 and not pods[0]:
         pods = []
     for pod in pods:
