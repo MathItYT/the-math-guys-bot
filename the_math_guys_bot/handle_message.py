@@ -133,6 +133,7 @@ class NecessaryImage(BaseModel):
 def get_pods_data(data: list[dict[str, str]]) -> tuple[list[str], list[str]]:
     text_results = []
     image_results = []
+    data = data.get("queryresult") or {}
     pods = data.get("pods") or [data.get("pod")]
     print("Data:", data)
     if len(pods) == 1 and not pods[0]:
