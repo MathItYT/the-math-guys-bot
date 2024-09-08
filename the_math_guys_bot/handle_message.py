@@ -130,12 +130,9 @@ class NecessaryImage(BaseModel):
                             "Si la imagen es una ecuación matemática y la ecuación ya está escrita en el mensaje, entonces la imagen no es necesaria.")
 
 
-def get_pods_data(data: list[dict[str, str]]) -> tuple[list[str], list[str]]:
+def get_pods_data(pods: list[dict[str, str]]) -> tuple[list[str], list[str]]:
     text_results = []
     image_results = []
-    data = data.get("queryresult") or {}
-    pods = data.get("pods") or [data.get("pod")]
-    print("Data:", data)
     if len(pods) == 1 and not pods[0]:
         pods = []
     for pod in pods:
@@ -246,7 +243,11 @@ async def output_text_func(new_msg: dict[str, str]) -> str | tuple[str, list[str
             "format": "plaintext,image",
             "output": "json"
         }).json()
-        text_results, image_results = get_pods_data(simplified_formula)
+        queryresult = simplified_formula.get("queryresult", {})
+        pods = queryresult.get("pods") or [queryresult.get("pod")]
+        if len(pods) == 1 and not pods[0]:
+            pods = []
+        text_results, image_results = get_pods_data(pods)
         text_results = "\n\n".join(text_results)
         imgs = [{"type": "image_url", "image_url": {"url": image}} for image in image_results]
         messages.append({"role": "user", "content": [
