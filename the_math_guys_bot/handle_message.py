@@ -133,7 +133,9 @@ class NecessaryImage(BaseModel):
 def get_pods_data(data: list[dict[str, str]]) -> tuple[list[str], list[str]]:
     text_results = []
     image_results = []
-    pods = data.get("pods") or [data.get("pod")] or []
+    pods = data.get("pods") or [data.get("pod")]
+    if len(pods) == 1 and not pods[0]:
+        pods = []
     for pod in pods:
         title = pod.get("title")
         plaintext = pod.get("plaintext")
@@ -156,7 +158,9 @@ def get_pods_data(data: list[dict[str, str]]) -> tuple[list[str], list[str]]:
             image_data = base64.b64encode(image_data.getvalue()).decode()
             image_results.append(f"data:image/png;base64,{image_data}")
             image.close()
-        subpods = pod.get("subpods") or [pod.get("subpod")] or []
+        subpods = pod.get("subpods") or [pod.get("subpod")]
+        if len(subpods) == 1 and not subpods[0]:
+            subpods = []
         sub_text_results, sub_image_results = get_pods_data(subpods)
         text_results.extend(sub_text_results)
         image_results.extend(sub_image_results)
