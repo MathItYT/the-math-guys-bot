@@ -130,11 +130,12 @@ class NecessaryImage(BaseModel):
                             "Si la imagen es una ecuación matemática y la ecuación ya está escrita en el mensaje, entonces la imagen no es necesaria.")
 
 
-def get_pods_data(pods: list[dict[str, str]]) -> tuple[list[str], list[str]]:
+def get_pods_data(data: list[dict[str, str]]) -> tuple[list[str], list[str]]:
     text_results = []
     image_results = []
+    pods = data.get("pods") or [data.get("pod")] or []
     for pod in pods:
-        title = pod["title"]
+        title = pod.get("title")
         plaintext = pod.get("plaintext")
         image = pod.get("img")
         if plaintext and title:
@@ -155,7 +156,7 @@ def get_pods_data(pods: list[dict[str, str]]) -> tuple[list[str], list[str]]:
             image_data = base64.b64encode(image_data.getvalue()).decode()
             image_results.append(f"data:image/png;base64,{image_data}")
             image.close()
-        subpods = pod.get("subpods", [])
+        subpods = pod.get("subpods") or [pod.get("subpod")] or []
         sub_text_results, sub_image_results = get_pods_data(subpods)
         text_results.extend(sub_text_results)
         image_results.extend(sub_image_results)
@@ -239,8 +240,7 @@ async def output_text_func(new_msg: dict[str, str]) -> str | tuple[str, list[str
             "format": "plaintext,image",
             "output": "json"
         }).json()
-        data = simplified_formula["queryresult"]["pods"]
-        text_results, image_results = get_pods_data(data)
+        text_results, image_results = get_pods_data(simplified_formula)
         text_results = "\n\n".join(text_results)
         imgs = [{"type": "image_url", "image_url": {"url": image}} for image in image_results]
         messages.append({"role": "user", "content": [
