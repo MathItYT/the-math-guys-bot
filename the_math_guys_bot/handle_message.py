@@ -252,7 +252,7 @@ async def output_text_func(new_msg: dict[str, str]) -> str | tuple[str, list[str
         text_results = "\n\n".join(text_results)
         imgs = [{"type": "image_url", "image_url": {"url": image}} for image in image_results]
         messages.append({"role": "user", "content": [
-            {"type": "text", "text": f"<@WOlFRAM_SOLVER> \"{text_results}\""},
+            {"type": "text", "text": f"<@WOlFRAM_SOLVER> \"{text_results}\n\nRemember to not use LaTeX, only Unicode chars\""},
             *imgs
         ]})
         response = client.chat.completions.create(
