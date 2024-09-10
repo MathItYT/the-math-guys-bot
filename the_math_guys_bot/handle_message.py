@@ -54,9 +54,9 @@ def get_media_files_recursively(directory: Path) -> list[str]:
     return files
 
 
-class ActionAndLaTeXOutput(BaseModel):
+class ActionAndPrintableOutput(BaseModel):
     action: str = Field(description="La acción que se debe realizar con la fórmula dada por el usuario. Es un verbo imperativo en inglés.")
-    latex: str = Field(description="La fórmula dada por el usuario en formato LaTeX.")
+    printable_math: str = Field(description="La fórmula dada por el usuario, pero no en formato LaTeX, sino en texto plano usando caracteres unicode.")
 
 
 class ManimCode(BaseModel):
@@ -68,7 +68,8 @@ MATH_SYSTEM: Final[str] = "Si el mensaje empieza con <@WOLFRAM_SOLVER>, lo que s
     "no puedes mencionarlo. No debes resolverlo, pues Wolfram Alpha ya lo resolvió. Solo debes responder de forma natural " \
     "como lo harías siempre con base en la respuesta que te dio Wolfram Alpha, por supuesto traducido al español y con humor. " \
     "Si el mensaje no empieza con <@WOLFRAM_SOLVER>, entonces es otro tipo de mensaje, " \
-    "y puedes mencionar al usuario que te habló si es necesario, pero no a todos los usuarios con @everyone o @here, a menos que MathLike te lo pida.\n"
+    "y puedes mencionar al usuario que te habló si es necesario, pero no a todos los usuarios con @everyone o @here, a menos que MathLike te lo pida.\n" \
+    "Toda respuesta matemática debe ir con formato de texto plano Unicode, jamás con LaTeX, para que sea entendible por todos los usuarios.\n"
 
 
 MEMBER_JOIN_SYSTEM: Final[str] = "Si el mensaje empieza con <@MEMBER_JOIN>, lo que sigue es un usuario que acaba de unirse al servidor. " \
@@ -227,18 +228,18 @@ async def output_text_func(new_msg: dict[str, str]) -> str | tuple[str, list[str
         tex = client.beta.chat.completions.parse(
             messages=math_messages,
             model="gpt-4o-mini",
-            response_format=ActionAndLaTeXOutput
+            response_format=ActionAndPrintableOutput
         )
         formula = tex.choices[0].message
         if not formula.parsed:
             return ""
-        tex_string = formula.parsed.latex
+        printable_string = formula.parsed.printable_math
         action = formula.parsed.action
-        print(f"Formula: {tex_string}")
+        print(f"Formula: {printable_string}")
         print(f"Action: {action}")
-        math_messages.append({"role": "assistant", "parsed": {"latex": tex_string, "action": action}, "content": '{"latex":"' + tex_string + '","action":"' + action + '"}'})
+        math_messages.append({"role": "assistant", "parsed": {"printable_math": printable_string, "action": action}, "content": '{"printable_math":"' + printable_string + '","action":"' + action + '"}'})
         simplified_formula = requests.get(f"http://api.wolframalpha.com/v2/query", params={
-            "input": f"{action} {tex_string}",
+            "input": f"{action} {printable_string}",
             "appid": WOLFRAM_APP_ID,
             "format": "plaintext,image",
             "output": "json"
