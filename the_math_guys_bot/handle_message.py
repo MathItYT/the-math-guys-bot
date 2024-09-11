@@ -29,10 +29,11 @@ MAX_MESSAGES_LENGTH: Final[int] = 50
 
 
 class Classifier(BaseModel):
-    type: Literal["dont_answer", "answer", "solve_math", "manim_animation"] = Field(
+    type: Literal["dont_answer", "answer", "solve_math", "manim_animation", "propositional_logic_1"] = Field(
         description="Dado un mensaje en el formato <@USER_ID> \"message\", donde USER_ID es el ID del usuario que habla en el chat y message es el contenido del mensaje, debes clasificar " \
         "entre algo que se debe responder, algo que no se debe responder, o un problema matemático. Las reglas son las siguientes:\n" \
         "- Si debes hacer una animación de Manim, debes responder con 'manim_animation'.\n" \
+        "- Si el mensaje es un problema de lógica proposicional, sin inferencia lógica, debes responder con 'propositional_logic_1'.\n" \
         "- Siempre que el mensaje tenga cualquier problema matemático o relacionado, como física, y aún más si dice que es para Wolfram, pero si no, igual consideras que se debe responder con 'solve_math'.\n" \
         "- Si el mensaje es spam, se debe responder con 'answer'.\n" \
         f"- Si el contenido del mensaje te menciona con <@{BOT_USER_ID}> o dicen la palabra 'bot', sea lo que sea, debes responder 'answer'.\n" \
@@ -83,6 +84,11 @@ MANIM_SYSTEM: Final[str] = "Si el mensaje empieza con <@MANIM>, lo que sigue es 
         "Responde con tu humor característico y de forma natural. Si el mensaje no empieza con <@MANIM>, entonces es otro tipo de mensaje."
 
 
+PROPOSITIONAL_LOGIC_1_SYSTEM: Final[str] = "Si el mensaje empieza con <@PROPOSITIONAL_LOGIC_1>, lo que sigue es una respuesta del profesor " \
+    "de lógica proposicional. PROPOSITIONAL_LOGIC_1 no es un usuario de Discord, por lo que no puedes mencionarlo. Debes decir exactamente lo que dice allí (como copiar lo que dice el profesor), " \
+    "pero con tu estilo humorístico y natural. Si el mensaje no empieza con <@PROPOSITIONAL_LOGIC_1>, entonces es otro tipo de mensaje.\n"
+
+
 training_messages: list[dict[str, str]] = [
     {"role": "system", "content": "Contexto: Tu nombre es TheMathGuysBot y eres un bot de Discord " \
                "que ayuda a resolver problemas matemáticos, de física y computación. " \
@@ -98,7 +104,7 @@ training_messages: list[dict[str, str]] = [
                "Todo mensaje irá con el formato <@USER_ID> \"message\", donde " \
                "USER_ID es el ID del usuario que te habla, y para mencionar a esa persona, " \
                f"puedes poner <@USER_ID> en tu mensaje. Tu ID es {BOT_USER_ID} y el ID de MathLike es {MATHLIKE_ID}. Además, si MathLike te da órdenes, debes responder con humor y obedecerle." \
-                "Debes evitar a toda costa mencionar a todos los usuarios con @everyone o @here, solo hazlo para anunciar un nuevo video de un usuario del server, o algún evento importante que MathLike te pida, no otro usuario.\n" + MATH_SYSTEM + MEMBER_JOIN_SYSTEM + MANIM_SYSTEM},
+                "Debes evitar a toda costa mencionar a todos los usuarios con @everyone o @here, solo hazlo para anunciar un nuevo video de un usuario del server, o algún evento importante que MathLike te pida, no otro usuario.\n" + MATH_SYSTEM + MEMBER_JOIN_SYSTEM + MANIM_SYSTEM + PROPOSITIONAL_LOGIC_1_SYSTEM},
     {"role": "user", "content": "<@951958511963742292> \"Hola bot\""},
     {"role": "assistant", "content": "¿Alguien me llamó? 😳"},
     {"role": "user", "content": "<@951958511963742292> \"Oye bot, ¿Cuál es la raíz cuadrada de 144?\""},
@@ -123,6 +129,7 @@ messages: list[dict[str, str]] = []
 math_messages: list[dict[str, str]] = []
 manim_messages: list[dict[str, str]] = []
 classifier_messages: list[dict[str, str]] = []
+propositional_logic_1_messages: list[dict[str, str]] = []
 
 
 class NecessaryImage(BaseModel):
@@ -187,7 +194,7 @@ async def handle_welcome_message(member: discord.Member, channel: discord.TextCh
 
 
 async def output_text_func(new_msg: dict[str, str]) -> str | tuple[str, list[str]]:
-    global messages, manim_messages, math_messages, classifier_messages
+    global messages, manim_messages, math_messages, classifier_messages, propositional_logic_1_messages
     if len(messages) >= MAX_MESSAGES_LENGTH:
         for i, msg in enumerate(messages):
             if msg["role"] == "user":
@@ -207,6 +214,11 @@ async def output_text_func(new_msg: dict[str, str]) -> str | tuple[str, list[str
         for i, msg in enumerate(classifier_messages):
             if msg["role"] == "user":
                 classifier_messages = classifier_messages[i:]
+                break
+    if len(propositional_logic_1_messages) >= MAX_MESSAGES_LENGTH:
+        for i, msg in enumerate(propositional_logic_1_messages):
+            if msg["role"] == "user":
+                propositional_logic_1_messages = propositional_logic_1_messages[i:]
                 break
     messages.append(new_msg)
     classifier_messages.append(new_msg)
@@ -281,6 +293,34 @@ async def output_text_func(new_msg: dict[str, str]) -> str | tuple[str, list[str
                 if classify_image_needed.choices[0].message.parsed.necessary:
                     image_results.append(img["image_url"]["url"])
             return response.choices[0].message.content, image_results
+        return ""
+    if answer_or_not.parsed.type == "propositional_logic_1":
+        new_msg_copy = new_msg.copy()
+        new_msg_copy["attachments"] = [
+            {
+                "file_id": "file-iu3Hy1UWAcibyT2gh7Rk1dQZ",
+                "tools": [{"type": "file_search"}]
+            }
+        ]
+        propositional_logic_1_messages.append(new_msg_copy)
+        thread = client.beta.threads.create(
+            messages=propositional_logic_1_messages,
+        )
+        thread_id = thread.id
+        run = client.beta.threads.runs.create_and_poll(
+            thread_id=thread_id,
+            assistant_id="asst_gZQ3aRzGEexLZjmUB2tKlgWx"
+        )
+        messages = list(client.beta.threads.messages.list(thread_id=thread.id, run_id=run.id))
+        message_content = messages[0].content[0].text.value
+        propositional_logic_1_messages.append({"role": "assistant", "content": [{"type": "text", "text": message_content}]})
+        messages.append({"role": "user", "content": f"<@PROPOSITIONAL_LOGIC_1> \"{message_content}\n\nRecuerda responder con humor y naturalidad, y copiar exactamente lo que dice el profesor, pero con tu estilo humorístico.\""})
+        response = client.chat.completions.create(
+            messages=training_messages + messages,
+            model="gpt-4o"
+        )
+        if response.choices[0].message.content:
+            return response.choices[0].message.content
         return ""
     if answer_or_not.parsed.type == "manim_animation":
         manim_messages.append(new_msg)
@@ -367,6 +407,7 @@ def clear_messages() -> None:
     math_messages.clear()
     manim_messages.clear()
     classifier_messages.clear()
+    propositional_logic_1_messages.clear()
 
 
 async def generate_response(message: Message) -> str | tuple[str, list[str]]:
