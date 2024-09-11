@@ -260,13 +260,7 @@ async def output_text_func(new_msg: dict[str, str]) -> str | tuple[str, list[str
         ]
         propositional_logic_1_messages.append(new_msg_copy)
         thread = client.beta.threads.create(
-            messages=[
-                {
-                    "role": "system",
-                    "content": "Eres un profesor de un curso introductorio de lógica proposicional, debes responder con base en los conocimientos que se te otorgaron."
-                },
-                *propositional_logic_1_messages
-            ]
+            messages=propositional_logic_1_messages
         )
         thread_id = thread.id
         run = client.beta.threads.runs.create_and_poll(
