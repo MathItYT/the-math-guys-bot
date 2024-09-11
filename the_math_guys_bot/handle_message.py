@@ -29,18 +29,18 @@ MAX_MESSAGES_LENGTH: Final[int] = 50
 
 
 class Classifier(BaseModel):
-    type: Literal["dont_answer", "answer", "solve_math", "manim_animation", "propositional_logic_1"] = Field(
+    type: Literal["dont_answer", "solve_math", "manim_animation", "propositional_logic_1", "general_answer"] = Field(
         description="Dado un mensaje en el formato <@USER_ID> \"message\", donde USER_ID es el ID del usuario que habla en el chat y message es el contenido del mensaje, debes clasificar " \
         "entre algo que se debe responder, algo que no se debe responder, o un problema matemático. Las reglas son las siguientes:\n" \
         "- Siempre que el mensaje sea sobre el primer curso de lógica proposicional o algún problema de lógica proposicional sin inferencia lógica, deberás responder con 'propositional_logic_1'.\n" \
         "- Si debes hacer una animación de Manim, debes responder con 'manim_animation'.\n" \
         "- Siempre que el mensaje tenga cualquier problema matemático o relacionado, como física, y aún más si dice que es para Wolfram, pero si no, igual consideras que se debe responder con 'solve_math'.\n" \
-        "- Si el mensaje es spam, se debe responder con 'answer'.\n" \
-        f"- Si el contenido del mensaje te menciona con <@{BOT_USER_ID}> o dicen la palabra 'bot', sea lo que sea, debes responder 'answer'.\n" \
-        "- Si el mensaje es un chiste, debes responder con 'answer'.\n" \
-        "- Si hablan de ti, debes responder 'answer'.\n" \
-        "- Si se trata de una bienvenida a un nuevo usuario, donde el usuario es <@MEMBER_JOIN>, debes responder 'answer'.\n" \
-        f"- Si el usuario <@{MATHLIKE_ID}> te pide que anuncies un nuevo video de un canal, debes responder 'answer'.\n" \
+        "- Si el mensaje es spam, se debe responder con 'general_answer'.\n" \
+        f"- Si el contenido del mensaje te menciona con <@{BOT_USER_ID}> o dicen la palabra 'bot', sea lo que sea, debes responder 'general_answer'.\n" \
+        "- Si el mensaje es un chiste, debes responder con 'general_answer'.\n" \
+        "- Si hablan de ti, debes responder 'general_answer'.\n" \
+        "- Si se trata de una bienvenida a un nuevo usuario, donde el usuario es <@MEMBER_JOIN>, debes responder 'general_answer'.\n" \
+        f"- Si el usuario <@{MATHLIKE_ID}> te pide que anuncies un nuevo video de un canal, debes responder 'general_answer'.\n" \
         "- De otro modo, como por ejemplo, nadie te menciona, o no es spam, o le hablan a otro usuario, o es otro tipo de respuesta que no sabes, debes responder con 'dont_answer'."
     )
 
@@ -303,6 +303,7 @@ async def output_text_func(new_msg: dict[str, str]) -> str | tuple[str, list[str
             }
         ]
         propositional_logic_1_messages.append(new_msg_copy)
+        messages.append(new_msg)
         thread = client.beta.threads.create(
             messages=propositional_logic_1_messages,
         )
