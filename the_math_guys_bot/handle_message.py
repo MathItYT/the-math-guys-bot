@@ -272,7 +272,7 @@ async def output_text_func(new_msg: dict[str, str]) -> str | tuple[str, list[str
         print(f"Message content: {message_content}")
         propositional_logic_1_messages.append({"role": "assistant", "content": [{"type": "text", "text": message_content}]})
         messages.append({"role": "user", "content": [
-            {"type": "text", "text": f"<@PROPOSITIONAL_LOGIC_1> \"{message_content}\n\nRecuerda responder con humor y naturalidad, y copiar exactamente lo que dice el profesor, pero con tu estilo humorístico, y sin LaTeX.\""}
+            {"type": "text", "text": f"<@PROPOSITIONAL_LOGIC_1> \"{message_content}\n\nRecuerda responder con humor y naturalidad, y copiar exactamente lo que dice el profesor, pero con tu estilo humorístico, y sin LaTeX, además de respetar el límite de 1750 caracteres.\""}
         ]})
         response = client.chat.completions.create(
             messages=training_messages + messages,
