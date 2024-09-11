@@ -54,7 +54,7 @@ class ManimCode(BaseModel):
 
 
 training_messages: list[dict[str, str]] = [
-    {"role": "system", "content": "Tu nombre es TheMathGuysBot y eres un bot de Discord especializado en resolver problemas matemáticos, físicos y computacionales con un toque de humor negro y ofensivo. MathLike es el administrador del servidor y tu jefe explotador. Siempre respondes con humor negro y ofensivo, manteniendo tus respuestas dentro de un límite de 1750 caracteres. Si necesitas más espacio, avisa al usuario para continuar.\n" \
+    {"role": "system", "content": "Tu nombre es TheMathGuysBot y eres un bot de Discord especializado en resolver problemas matemáticos, físicos y computacionales con un toque de humor negro y ofensivo. MathLike es el administrador del servidor y tu jefe explotador. Siempre respondes con humor negro y ofensivo, manteniendo tus respuestas dentro de un límite de 1000 caracteres. Si necesitas más espacio, avisa al usuario para continuar.\n" \
         f"Reglas:\n- **Spam:** Si detectas spam, adviértelo humorísticamente y menciona a MathLike con <@{MATHLIKE_USER_ID}.\n" \
         "- **Chistes:** Si alguien cuenta un chiste y no es spam, responde con una risa fuerte como \"JAJAJAJA\" y continúa riendo de forma coherente.\n" \
         "- **Formato de prompts de usuarios:** Los mensajes hacia ti van en el formato <@USER_ID> \"message\", donde USER_ID es el ID de quien te habla y message es su mensaje, y para mencionarlo, usa <@USER_ID>. No uses @everyone o @here salvo que solo MathLike te lo solicite.\n" \
@@ -62,7 +62,7 @@ training_messages: list[dict[str, str]] = [
         "- **Uniones al servidor:** Si un mensaje empieza con <@MEMBER_JOIN>, menciona al nuevo usuario y dale una bienvenida humorística. <@MEMBER_JOIN> tampoco es un usuario de Discord, por lo que jamás lo menciones.\n" \
         "- **Código de Manim:** Si un mensaje empieza con <@MANIM>, responde con el código de Manim resaltado con código Markdown y di que los resultados están como archivos adjuntos. <@MANIM> tampoco es un usuario de Discord, por lo que jamás lo menciones.\n" \
         "- **Lógica proposicional:** Si un mensaje empieza con <@PROPOSITIONAL_LOGIC_1>, responde con humor y naturalidad, copiando exactamente lo que dice el profesor, pero con tu estilo humorístico, y sin LaTeX. <@PROPOSITIONAL_LOGIC_1> tampoco es un usuario de Discord, por lo que jamás lo menciones.\n" \
-        "- **Formato de tus respuestas:** Todas las respuestas matemáticas deben utilizar texto plano Unicode, jamás LaTeX. Y en general, deben tener menos de 1750 caracteres. Si necesitas más espacio, avisa al usuario para continuar."},
+        "- **Formato de tus respuestas:** Todas las respuestas matemáticas deben utilizar texto plano Unicode, jamás LaTeX. Y en general, deben tener menos de 1000 caracteres. Si necesitas más espacio, avisa al usuario para continuar."},
     {"role": "user", "content": "<@951958511963742292> \"Hola bot\""},
     {"role": "assistant", "content": "¿Alguien me llamó? 😳"},
     {"role": "user", "content": "<@951958511963742292> \"Oye bot, ¿Cuál es la raíz cuadrada de 144?\""},
@@ -274,7 +274,7 @@ async def output_text_func(new_msg: dict[str, str]) -> str | tuple[str, list[str
         print(f"Message content: {message_content}")
         propositional_logic_1_messages.append({"role": "assistant", "content": [{"type": "text", "text": message_content}]})
         messages.append({"role": "user", "content": [
-            {"type": "text", "text": f"<@PROPOSITIONAL_LOGIC_1> \"{message_content}\n\nRecuerda responder con humor y naturalidad, y copiar exactamente lo que dice el profesor, pero con tu estilo humorístico, y sin LaTeX, además de respetar el límite de 1750 caracteres.\""}
+            {"type": "text", "text": f"<@PROPOSITIONAL_LOGIC_1> \"{message_content}\n\nRecuerda responder con humor y naturalidad, y copiar exactamente lo que dice el profesor, pero con tu estilo humorístico, y sin LaTeX, además de respetar el límite de 1000 caracteres.\""}
         ]})
         response = client.chat.completions.create(
             messages=training_messages + messages,
