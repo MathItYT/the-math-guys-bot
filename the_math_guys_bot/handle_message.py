@@ -271,14 +271,17 @@ async def output_text_func(new_msg: dict[str, str]) -> str | tuple[str, list[str
         message_content = messages[0].content[0].text.value
         print(f"Message content: {message_content}")
         propositional_logic_1_messages.append({"role": "assistant", "content": [{"type": "text", "text": message_content}]})
-        messages.append({"role": "user", "content": f"<@PROPOSITIONAL_LOGIC_1> \"{message_content}\n\nRecuerda responder con humor y naturalidad, y copiar exactamente lo que dice el profesor, pero con tu estilo humorístico, y sin LaTeX.\""})
+        messages.append({"role": "user", "content": [
+            {"type": "text", "text": f"<@PROPOSITIONAL_LOGIC_1> \"{message_content}\n\nRecuerda responder con humor y naturalidad, y copiar exactamente lo que dice el profesor, pero con tu estilo humorístico, y sin LaTeX.\""}
+        ]})
         response = client.chat.completions.create(
             messages=training_messages + messages,
             model="gpt-4o"
         )
-        if response.choices[0].message.content:
-            return response.choices[0].message.content
-        return ""
+        if not response.choices[0].message.content:
+            return ""
+        messages.append({"role": "assistant", "content": response.choices[0].message.content})
+        return response.choices[0].message.content
     if answer_or_not.parsed.type == "manim_animation":
         manim_messages.append(new_msg)
         code = client.beta.chat.completions.parse(
