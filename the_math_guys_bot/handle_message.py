@@ -137,7 +137,8 @@ async def handle_welcome_message(member: discord.Member, channel: discord.TextCh
     messages.append(prompt)
     response = client.chat.completions.create(
         messages=training_messages + messages,
-        model="gpt-4o"
+        model="gpt-4o",
+        max_tokens=400
     )
     if not response.choices[0].message.content:
         return
@@ -225,7 +226,8 @@ async def output_text_func(new_msg: dict[str, str]) -> str | tuple[str, list[str
         ]})
         response = client.chat.completions.create(
             messages=training_messages + messages,
-            model="gpt-4o"
+            model="gpt-4o",
+            max_tokens=400
         )
         if response.choices[0].message.content:
             messages.append({"role": "assistant", "content": response.choices[0].message.content})
@@ -276,7 +278,8 @@ async def output_text_func(new_msg: dict[str, str]) -> str | tuple[str, list[str
         ]})
         response = client.chat.completions.create(
             messages=training_messages + messages,
-            model="gpt-4o"
+            model="gpt-4o",
+            max_tokens=400
         )
         if not response.choices[0].message.content:
             return ""
@@ -336,14 +339,16 @@ async def output_text_func(new_msg: dict[str, str]) -> str | tuple[str, list[str
         messages.append({"role": "user", "content": f"<@MANIM> \"{code.parsed.code}\""})
         response = client.chat.completions.create(
             messages=training_messages + messages,
-            model="gpt-4o"
+            model="gpt-4o",
+            max_tokens=400
         )
         if response.choices[0].message.content:
             return response.choices[0].message.content, media_files
         return ""
     response = client.chat.completions.create(
         messages=training_messages + messages,
-        model="gpt-4o"
+        model="gpt-4o",
+        max_tokens=400
     )
     if response.choices[0].message.content:
         messages.append({"role": "assistant", "content": response.choices[0].message.content})
