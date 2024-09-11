@@ -274,6 +274,9 @@ async def output_text_func(new_msg: dict[str, str]) -> str | tuple[str, list[str
         messages.append({"role": "user", "content": [
             {"type": "text", "text": f"<@PROPOSITIONAL_LOGIC_1> \"{message_content}\n\nRecuerda responder con humor y naturalidad, y copiar exactamente lo que dice el profesor, pero con tu estilo humorístico, y sin LaTeX.\""}
         ]})
+        print((training_messages + messages)[17]["content"])
+        print((training_messages + messages)[17]["content"][0])
+        print((training_messages + messages)[17]["content"][0]["text"])
         response = client.chat.completions.create(
             messages=training_messages + messages,
             model="gpt-4o"
