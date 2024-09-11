@@ -314,7 +314,7 @@ async def output_text_func(new_msg: dict[str, str]) -> str | tuple[str, list[str
         messages = list(client.beta.threads.messages.list(thread_id=thread.id, run_id=run.id))
         message_content = messages[0].content[0].text.value
         propositional_logic_1_messages.append({"role": "assistant", "content": [{"type": "text", "text": message_content}]})
-        messages.append({"role": "user", "content": f"<@PROPOSITIONAL_LOGIC_1> \"{message_content}\n\nRecuerda responder con humor y naturalidad, y copiar exactamente lo que dice el profesor, pero con tu estilo humorístico.\""})
+        messages.append({"role": "user", "content": f"<@PROPOSITIONAL_LOGIC_1> \"{message_content}\n\nRecuerda responder con humor y naturalidad, y copiar exactamente lo que dice el profesor, pero con tu estilo humorístico, y sin LaTeX.\""})
         response = client.chat.completions.create(
             messages=training_messages + messages,
             model="gpt-4o"
