@@ -259,9 +259,14 @@ async def output_text_func(new_msg: dict[str, str]) -> str | tuple[str, list[str
             }
         ]
         propositional_logic_1_messages.append(new_msg_copy)
-        messages.append(new_msg)
         thread = client.beta.threads.create(
-            messages=propositional_logic_1_messages,
+            messages=[
+                {
+                    "role": "system",
+                    "content": "Eres un profesor de un curso introductorio de lógica proposicional, debes responder con base en los conocimientos que se te otorgaron."
+                },
+                *propositional_logic_1_messages
+            ]
         )
         thread_id = thread.id
         run = client.beta.threads.runs.create_and_poll(
@@ -270,6 +275,7 @@ async def output_text_func(new_msg: dict[str, str]) -> str | tuple[str, list[str
         )
         messages = list(client.beta.threads.messages.list(thread_id=thread.id, run_id=run.id))
         message_content = messages[0].content[0].text.value
+        print(f"Message content: {message_content}")
         propositional_logic_1_messages.append({"role": "assistant", "content": [{"type": "text", "text": message_content}]})
         messages.append({"role": "user", "content": f"<@PROPOSITIONAL_LOGIC_1> \"{message_content}\n\nRecuerda responder con humor y naturalidad, y copiar exactamente lo que dice el profesor, pero con tu estilo humorístico, y sin LaTeX.\""})
         response = client.chat.completions.create(
