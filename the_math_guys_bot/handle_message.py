@@ -185,7 +185,7 @@ async def output_text_func(new_msg: dict[str, str]) -> str | tuple[str, list[str
             {"role": "system", "content": "Debes determinar si debes responder al mensaje o no y el tipo de respuesta. Si el mensaje no dice la palabra 'bot' ni <@BOT_USER_ID>, no te están mencionando ni refiriéndose a ti, y si además de eso, no hay spam, la respuesta no es necesaria y necessary_answer debe ser False obligatoriamente, pero si se dirigen a ti o hay spam, ahí debe ser necessary_answer True. Si se habla del curso de lógica 1, debes responder con 'propositional_logic_1'. Si se pide resolver un problema matemático general, debes responder con 'solve_math'. Si se te pide una animación de Manim, debes responder con 'manim_animation'. Si te mencionan y es una conversación general, debes responder con 'general_answer'."},
             *classifier_messages
         ],
-        model="gpt-4o-mini",
+        model="gpt-4o",
         response_format=Classifier
     )
     answer_or_not = answer_or_not.choices[0].message
@@ -200,7 +200,7 @@ async def output_text_func(new_msg: dict[str, str]) -> str | tuple[str, list[str
         math_messages.append(new_msg)
         tex = client.beta.chat.completions.parse(
             messages=math_messages,
-            model="gpt-4o-mini",
+            model="gpt-4o",
             response_format=ActionAndPrintableOutput
         )
         formula = tex.choices[0].message
@@ -247,7 +247,7 @@ async def output_text_func(new_msg: dict[str, str]) -> str | tuple[str, list[str
                             img
                         ]}
                     ],
-                    model="gpt-4o-mini",
+                    model="gpt-4o",
                     response_format=NecessaryImage
                 )
                 if not classify_image_needed.choices[0].message.parsed:
