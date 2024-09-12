@@ -30,7 +30,7 @@ MAX_MESSAGES_LENGTH: Final[int] = 50
 
 class Classifier(BaseModel):
     type: Literal["dont_answer", "solve_math", "manim_animation", "propositional_logic_1", "general_answer"] = Field(
-        description=f"Clasificación del mensaje. Si el mensaje dice la palabra 'bot' o <@{BOT_USER_ID}>, te están mencionando y debes clasificar según corresponda sin usar 'dont_answer'. 'dont_answer' significa que no te mencionan a ti, no hay spam, ni nada relevante para ti."
+        description=f"Si el mensaje dice la palabra 'bot' o <@{BOT_USER_ID}>, te están mencionando y debes clasificar según corresponda sin usar 'dont_answer'. 'dont_answer' significa que no te mencionan a ti, no hay spam, ni nada relevante para ti."
     )
 
 
@@ -180,7 +180,10 @@ async def output_text_func(new_msg: dict[str, str]) -> str | tuple[str, list[str
     messages.append(new_msg)
     classifier_messages.append(new_msg)
     answer_or_not = client.beta.chat.completions.parse(
-        messages=classifier_messages,
+        messages=[
+            {"role": "system", "content": "Debes determinar si debes responder al mensaje o no. Si el mensaje dice la palabra 'bot' o <@BOT_USER_ID>, te están mencionando y debes clasificar según corresponda sin usar 'dont_answer'. 'dont_answer' significa que no te mencionan a ti, no hay spam, ni nada relevante para ti."},
+            *classifier_messages
+        ],
         model="gpt-4o-mini",
         response_format=Classifier
     )
