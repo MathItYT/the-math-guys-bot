@@ -29,9 +29,10 @@ MAX_MESSAGES_LENGTH: Final[int] = 50
 
 
 class Classifier(BaseModel):
-    type: Literal["dont_answer", "solve_math", "manim_animation", "propositional_logic_1", "general_answer"] = Field(
+    type: Literal["solve_math", "manim_animation", "propositional_logic_1", "general_answer"] = Field(
         description=f"Si el mensaje dice la palabra 'bot' o <@{BOT_USER_ID}>, te están mencionando y debes clasificar según corresponda sin usar 'dont_answer'. 'dont_answer' significa que no te mencionan a ti, no hay spam, ni nada relevante para ti."
     )
+    necessary_answer: bool = Field(description="Si es necesario responder al mensaje, debe ser True. Si no es necesario responder, debe ser False.")
 
 
 def get_media_files_recursively(directory: Path) -> list[str]:
@@ -181,7 +182,7 @@ async def output_text_func(new_msg: dict[str, str]) -> str | tuple[str, list[str
     classifier_messages.append(new_msg)
     answer_or_not = client.beta.chat.completions.parse(
         messages=[
-            {"role": "system", "content": "Debes determinar si debes responder al mensaje o no. Si el mensaje dice la palabra 'bot' o <@BOT_USER_ID>, te están mencionando y debes clasificar según corresponda sin usar 'dont_answer'. 'dont_answer' significa que no te mencionan a ti, no hay spam, ni nada relevante para ti. Si se habla del curso de lógica 1, debes responder con 'propositional_logic_1'. Si se pide resolver un problema matemático general, debes responder con 'solve_math'. Si se te pide una animación de Manim, debes responder con 'manim_animation'. Si te mencionan y es una conversación general, debes responder con 'general_answer'."},
+            {"role": "system", "content": "Debes determinar si debes responder al mensaje o no y el tipo de respuesta. Si el mensaje no dice la palabra 'bot' ni <@BOT_USER_ID>, no te están mencionando ni refiriéndose a ti, y si además de eso, no hay spam, la respuesta no es necesaria. Si se habla del curso de lógica 1, debes responder con 'propositional_logic_1'. Si se pide resolver un problema matemático general, debes responder con 'solve_math'. Si se te pide una animación de Manim, debes responder con 'manim_animation'. Si te mencionan y es una conversación general, debes responder con 'general_answer'."},
             *classifier_messages
         ],
         model="gpt-4o-mini",
@@ -191,9 +192,9 @@ async def output_text_func(new_msg: dict[str, str]) -> str | tuple[str, list[str
     if not answer_or_not.parsed:
         return ""
     print(f"Type: {answer_or_not.parsed.type}")
-    print(f"Content: {answer_or_not.content}")
-    classifier_messages.append({"role": "assistant", "parsed": {"type": answer_or_not.parsed.type}, "content": '{"type":"' + answer_or_not.parsed.type + '"}'})
-    if answer_or_not.parsed.type == "dont_answer":
+    print(f"Necessary answer: {answer_or_not.parsed.necessary_answer}")
+    classifier_messages.append({"role": "assistant", "parsed": {"type": answer_or_not.parsed.type, "necessary_answer": answer_or_not.parsed.necessary_answer}, "content": answer_or_not.content})
+    if not answer_or_not.parsed.necessary_answer:
         return ""
     if answer_or_not.parsed.type == "solve_math":
         math_messages.append(new_msg)
@@ -209,7 +210,7 @@ async def output_text_func(new_msg: dict[str, str]) -> str | tuple[str, list[str
         action = formula.parsed.action
         print(f"Formula: {printable_string}")
         print(f"Action: {action}")
-        math_messages.append({"role": "assistant", "parsed": {"printable_math": printable_string, "action": action}, "content": '{"printable_math":"' + printable_string + '","action":"' + action + '"}'})
+        math_messages.append({"role": "assistant", "parsed": {"printable_math": printable_string, "action": action}, "content": formula.content})
         simplified_formula = requests.get(f"http://api.wolframalpha.com/v2/query", params={
             "input": f"{action} {printable_string}",
             "appid": WOLFRAM_APP_ID,
@@ -301,7 +302,7 @@ async def output_text_func(new_msg: dict[str, str]) -> str | tuple[str, list[str
         if not code.parsed.code:
             return ""
         print(f"Manim code: {code.parsed.code}")
-        manim_messages.append({"role": "assistant", "parsed": {"code": code.parsed.code}, "content": '{"code":"' + code.parsed.code + '"}'})
+        manim_messages.append({"role": "assistant", "parsed": {"code": code.parsed.code}, "content": code.content})
         error = True
         while error:
             try:
@@ -336,7 +337,7 @@ async def output_text_func(new_msg: dict[str, str]) -> str | tuple[str, list[str
                 if Path("media").exists():
                     rmtree("media")
                 print(f"Manim code: {code.parsed.code}")
-                manim_messages.append({"role": "assistant", "parsed": {"code": code.parsed.code}, "content": '{"code":"' + code.parsed.code + '"}'})
+                manim_messages.append({"role": "assistant", "parsed": {"code": code.parsed.code}, "content": code.content})
         media_dir = Path("media")
         media_files = get_media_files_recursively(media_dir)
         messages.append({"role": "user", "content": f"<@MANIM> \"{code.parsed.code}\""})
