@@ -32,7 +32,7 @@ class Classifier(BaseModel):
     type: Literal["solve_math", "manim_animation", "propositional_logic_1", "general_answer"] = Field(
         description=f"El tipo de respuesta que se debe dar al mensaje, dependiendo de lo que este diga."
     )
-    necessary_answer: bool = Field(description="Si es necesario responder al mensaje, debe ser True. Si no es necesario responder, debe ser False.")
+    necessary_answer: Literal["yes", "no"] = Field(description="Si es necesario responder al mensaje, debe ser 'yes'. Si no es necesario responder, debe ser 'no'.")
 
 
 def get_media_files_recursively(directory: Path) -> list[str]:
@@ -90,7 +90,7 @@ propositional_logic_1_messages: list[dict[str, str]] = []
 
 
 class NecessaryImage(BaseModel):
-    necessary: bool = Field(description="Si es necesaria la imagen para entender el mensaje, debe ser True. Si ya se describe en el mensaje, debe ser False.\n" \
+    necessary: Literal["yes", "no"] = Field(description="Si es necesaria la imagen para entender el mensaje, debe ser 'yes'. Si ya se describe en el mensaje, debe ser 'no'.\n" \
                             "Por ejemplo, si el mensaje está destinado para mostrar una gráfica y la imagen es la gráfica, entonces la imagen es necesaria. " \
                             "Si la imagen es una ecuación matemática y la ecuación ya está escrita en el mensaje, entonces la imagen no es necesaria.")
 
@@ -182,7 +182,7 @@ async def output_text_func(new_msg: dict[str, str]) -> str | tuple[str, list[str
     classifier_messages.append(new_msg)
     answer_or_not = client.beta.chat.completions.parse(
         messages=[
-            {"role": "system", "content": "Debes determinar si debes responder al mensaje o no y el tipo de respuesta. Si el mensaje no dice la palabra 'bot' ni <@BOT_USER_ID>, no te están mencionando ni refiriéndose a ti, y si además de eso, no hay spam, la respuesta no es necesaria y necessary_answer debe ser False obligatoriamente, pero si se dirigen a ti o hay spam, ahí debe ser necessary_answer True. Si se habla del curso de lógica 1, debes responder con 'propositional_logic_1'. Si se pide resolver un problema matemático general, debes responder con 'solve_math'. Si se te pide una animación de Manim, debes responder con 'manim_animation'. Si te mencionan y es una conversación general, debes responder con 'general_answer'."},
+            {"role": "system", "content": "Debes determinar si debes responder al mensaje o no y el tipo de respuesta. Si el mensaje no dice la palabra 'bot' ni <@BOT_USER_ID>, no te están mencionando ni refiriéndose a ti, y si además de eso, no hay spam, la respuesta no es necesaria y necessary_answer debe ser 'no' obligatoriamente, pero si se dirigen a ti o hay spam, ahí debe ser necessary_answer 'yes'. Si se habla del curso de lógica 1, debes responder con 'propositional_logic_1'. Si se pide resolver un problema matemático general, debes responder con 'solve_math'. Si se te pide una animación de Manim, debes responder con 'manim_animation'. Si te mencionan y es una conversación general, debes responder con 'general_answer'."},
             *classifier_messages
         ],
         model="gpt-4o-2024-08-06",
@@ -194,7 +194,7 @@ async def output_text_func(new_msg: dict[str, str]) -> str | tuple[str, list[str
     print(f"Type: {answer_or_not.parsed.type}")
     print(f"Necessary answer: {answer_or_not.parsed.necessary_answer}")
     classifier_messages.append({"role": "assistant", "parsed": {"type": answer_or_not.parsed.type, "necessary_answer": answer_or_not.parsed.necessary_answer}, "content": answer_or_not.content})
-    if not answer_or_not.parsed.necessary_answer:
+    if answer_or_not.parsed.necessary_answer == "no":
         return ""
     if answer_or_not.parsed.type == "solve_math":
         math_messages.append(new_msg)
