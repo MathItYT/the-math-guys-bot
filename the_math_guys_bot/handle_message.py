@@ -132,7 +132,7 @@ def get_pods_data(pods: list[dict[str, str]]) -> tuple[list[str], list[str]]:
 
 async def handle_welcome_message(member: discord.Member, channel: discord.TextChannel) -> None:
     global messages
-    prompt = f"<@MEMBER_JOIN> \"{member.author.mention} se ha unido al servidor. Dale la bienvenida.\""
+    prompt = f"<@MEMBER_JOIN> \"{member.mention} se ha unido al servidor. Dale la bienvenida.\""
     prompt = {"role": "user", "content": prompt}
     messages.append(prompt)
     response = client.chat.completions.create(
