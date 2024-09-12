@@ -393,10 +393,14 @@ async def generate_response(message: Message) -> str | tuple[str, list[str]]:
 
 
 async def handle_message(message: Message) -> None:
-    global training_messages, instructions
+    global training_messages, instructions, messages
     if message.author.bot:
         return
     await get_images(message)
+    mentions_ids = [mention.id for mention in message.mentions]
+    if BOT_USER_ID not in mentions_ids and "bot" not in message.content.lower():
+        messages.append({"role": "user", "content": f"{message.author.mention} \"{message.content}\""})
+        return
     response = await generate_response(message)
     if response and isinstance(response, str):
         print(f"[TheMathGuysBot]: {response}")
