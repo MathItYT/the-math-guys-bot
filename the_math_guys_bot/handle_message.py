@@ -30,7 +30,7 @@ MAX_MESSAGES_LENGTH: Final[int] = 50
 
 class Classifier(BaseModel):
     type: Literal["solve_math", "manim_animation", "propositional_logic_1", "general_answer"] = Field(
-        description=f"Si el mensaje dice la palabra 'bot' o <@{BOT_USER_ID}>, te están mencionando y debes clasificar según corresponda sin usar 'dont_answer'. 'dont_answer' significa que no te mencionan a ti, no hay spam, ni nada relevante para ti."
+        description=f"El tipo de respuesta que se debe dar al mensaje, dependiendo de lo que este diga."
     )
     necessary_answer: bool = Field(description="Si es necesario responder al mensaje, debe ser True. Si no es necesario responder, debe ser False.")
 
