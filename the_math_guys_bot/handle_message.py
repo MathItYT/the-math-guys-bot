@@ -181,7 +181,7 @@ async def output_text_func(new_msg: dict[str, str]) -> str | tuple[str, list[str
     classifier_messages.append(new_msg)
     answer_or_not = client.beta.chat.completions.parse(
         messages=[
-            {"role": "system", "content": "Debes determinar si debes responder al mensaje o no. Si el mensaje dice la palabra 'bot' o <@BOT_USER_ID>, te están mencionando y debes clasificar según corresponda sin usar 'dont_answer'. 'dont_answer' significa que no te mencionan a ti, no hay spam, ni nada relevante para ti."},
+            {"role": "system", "content": "Debes determinar si debes responder al mensaje o no. Si el mensaje dice la palabra 'bot' o <@BOT_USER_ID>, te están mencionando y debes clasificar según corresponda sin usar 'dont_answer'. 'dont_answer' significa que no te mencionan a ti, no hay spam, ni nada relevante para ti. Si se habla del curso de lógica 1, debes responder con 'propositional_logic_1'. Si se pide resolver un problema matemático general, debes responder con 'solve_math'. Si se te pide una animación de Manim, debes responder con 'manim_animation'. Si te mencionan y es una conversación general, debes responder con 'general_answer'."},
             *classifier_messages
         ],
         model="gpt-4o-mini",
