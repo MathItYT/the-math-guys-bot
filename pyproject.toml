@@ -9,10 +9,12 @@ readme = "README.md"
 python = ">=3.9,<3.13"
 python-dotenv = "^1.0.0"
 py-cord = {git = "https://github.com/Pycord-Development/pycord.git", branch="master"}
-python-youtube = "^0.9.5"
 openai = "^1.43.0"
 pillow = "^10.4.0"
 manim = "^0.18.1"
+requests = "^2.32.3"
+google-api-python-client = "^2.145.0"
+html2text = "^2024.2.26"
 
 
 [tool.poetry.group.dev.dependencies]
