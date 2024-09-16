@@ -15,7 +15,7 @@ GENERAL_ID: Final[int] = 1045453709221568535
 SERVER_ID: Final[int] = 1045453708642758657
 MATHLIKE_ID: Final[int] = 546393436668952663
 
-bot: discord.Bot = discord.Bot(description="Soy propiedad de The Math Guys :)", intents=discord.Intents.all())
+bot: commands.Bot = commands.Bot(description="Soy propiedad de The Math Guys :)", intents=discord.Intents.all())
 connections = {}
 
 
@@ -29,7 +29,6 @@ async def on_ready():
 async def on_message(message: discord.Message):
     if message.author == bot.user:
         return
-    
     username: str = str(message.author)
     user_message: str = message.content
     channel: str = str(message.channel)
@@ -37,7 +36,8 @@ async def on_message(message: discord.Message):
         premium_users = json.load(fp)
     if message.author.id in premium_users:
         print(f'[{channel}] {username} (PREMIUM): "{user_message}"')
-        await premium_handle_message(message)
+        ctx = await bot.get_context(message)
+        await premium_handle_message(message, ctx)
         return
     print(f'[{channel}] {username}: "{user_message}"')
     await handle_message(message)
