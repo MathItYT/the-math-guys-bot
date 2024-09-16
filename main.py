@@ -2,8 +2,10 @@ from dotenv import load_dotenv
 import os
 from typing import Final
 from the_math_guys_bot.handle_message import handle_message, handle_welcome_message, clear_messages
+from the_math_guys_bot.premium.intelligent_response import premium_handle_message
 import discord
 from discord.ext import commands
+import json
 
 
 load_dotenv()
@@ -31,7 +33,12 @@ async def on_message(message: discord.Message):
     username: str = str(message.author)
     user_message: str = message.content
     channel: str = str(message.channel)
-
+    with open("premium.json", "r") as fp:
+        premium_users = json.load(fp)
+    if message.author.id in premium_users:
+        print(f'[{channel}] {username} (PREMIUM): "{user_message}"')
+        await premium_handle_message(message)
+        return
     print(f'[{channel}] {username}: "{user_message}"')
     await handle_message(message)
 
