@@ -1,10 +1,12 @@
 import os
 from typing import Final, Literal
+from dotenv import load_dotenv
 
 from pydantic import BaseModel, Field
 from openai import OpenAI
 
 
+load_dotenv()
 client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
 
 MATHLIKE_USER_ID: Final[int] = 546393436668952663
