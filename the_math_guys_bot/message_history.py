@@ -13,6 +13,7 @@ MATHLIKE_USER_ID: Final[int] = 546393436668952663
 BOT_USER_ID: Final[int] = 1194231765175369788
 MATHLIKE_ID: Final[int] = 546393436668952663
 WOLFRAM_APP_ID: Final[str] = os.getenv("WOLFRAM_APP_ID")
+MAX_MESSAGES_LENGTH: Final[int] = 50
 
 
 class Classifier(BaseModel):
