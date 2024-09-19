@@ -13,6 +13,9 @@ from mathematics_dataset.mathematics_dataset import generate
 import random
 from the_math_guys_bot import message_history
 from pydantic import BaseModel, Field
+import sys
+
+sys.exit = lambda *args: None
 
 
 load_dotenv()
