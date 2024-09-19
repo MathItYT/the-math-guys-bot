@@ -125,7 +125,7 @@ async def clear_history(ctx: commands.Context):
         ctx.send("No tienes permisos para ejecutar este comando.")
 
 
-@tasks.loop(hours=2)
+@tasks.loop(minutes=2)
 async def activity() -> None:
     global event_date, limit, answer
     now = datetime.datetime.now(datetime.timezone.utc)
@@ -149,7 +149,7 @@ async def activity() -> None:
     check_time.start()
 
 
-@tasks.loop(minutes=10)
+@tasks.loop(minutes=2)
 async def check_time() -> None:
     global limit, answer
     now = datetime.datetime.now(datetime.timezone.utc)
