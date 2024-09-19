@@ -132,7 +132,7 @@ async def clear_history(ctx: commands.Context):
         ctx.send("No tienes permisos para ejecutar este comando.")
 
 
-def generate_question_and_answer() -> None:
+def generate_question_and_answer(argv) -> None:
     global exercise, answer
     generate.init_modules()
     modules = generate.filtered_modules["train-easy"]
