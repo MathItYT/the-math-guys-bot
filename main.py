@@ -153,7 +153,7 @@ async def activity() -> None:
         return
     with open(events_json, "w") as fp:
         json.dump({"last_event": event_date.isoformat()}, fp)
-    exercise, answer = generate_question_and_answer()
+    generate_question_and_answer()
     event_date = event_date + datetime.timedelta(days=1)
     general = bot.get_channel(GENERAL_ID)
     limit = event_date + datetime.timedelta(minutes=10)
