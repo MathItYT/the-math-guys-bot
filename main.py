@@ -7,6 +7,7 @@ import discord
 from discord.ext import commands, tasks
 import json
 import datetime
+from absl import app
 from pathlib import Path
 from mathematics_dataset.mathematics_dataset import generate
 import random
@@ -40,6 +41,7 @@ if "last_event" in events:
     if event_date.date() == datetime.datetime.now().date():
         event_date = event_date + datetime.timedelta(days=1)
 limit = None
+exercise = None
 answer = None
 
 
@@ -52,7 +54,7 @@ async def on_ready():
 
 
 async def handle_answer(message: discord.Message):
-    global limit, answer
+    global limit, answer, exercise, event_date
     username: str = str(message.author)
     user_message: str = message.content
     channel: str = str(message.channel)
@@ -83,6 +85,8 @@ async def handle_answer(message: discord.Message):
         check_time.stop()
         limit = None
         answer = None
+        exercise = None
+        event_date = event_date + datetime.timedelta(days=1)
     else:
         general = bot.get_channel(GENERAL_ID)
         await general.send(f"{message.author.mention} Respuesta incorrecta, ¡sigue intentando!", reference=message)
@@ -125,26 +129,26 @@ async def clear_history(ctx: commands.Context):
         ctx.send("No tienes permisos para ejecutar este comando.")
 
 
-def generate_question_and_answer() -> tuple[str, str]:
+def generate_question_and_answer() -> None:
+    global exercise, answer
     generate.init_modules()
     modules = generate.filtered_modules["train-easy"]
     modules = random.choice(modules)
     problem, _ = generate.sample_from_module(modules)
     exercise = problem.question
     answer = problem.answer
-    return exercise, answer
 
 
 @tasks.loop(minutes=2)
 async def activity() -> None:
-    global event_date, limit, answer
+    global event_date, limit, answer, exercise
     now = datetime.datetime.now(datetime.timezone.utc)
     delta = now - event_date
     if delta.total_seconds() < 0:
         return
     with open(events_json, "w") as fp:
         json.dump({"last_event": event_date.isoformat()}, fp)
-    exercise, answer = generate_question_and_answer()
+    exercise, answer = app.run(generate_question_and_answer)
     event_date = event_date + datetime.timedelta(days=1)
     general = bot.get_channel(GENERAL_ID)
     limit = event_date + datetime.timedelta(minutes=10)
@@ -156,7 +160,7 @@ async def activity() -> None:
 
 @tasks.loop(minutes=2)
 async def check_time() -> None:
-    global limit, answer
+    global limit, answer, event_date, exercise
     now = datetime.datetime.now(datetime.timezone.utc)
     if now >= limit:
         general = bot.get_channel(GENERAL_ID)
@@ -164,6 +168,8 @@ async def check_time() -> None:
         check_time.stop()
         limit = None
         answer = None
+        exercise = None
+        event_date = event_date + datetime.timedelta(days=1)
 
 
 def main():
