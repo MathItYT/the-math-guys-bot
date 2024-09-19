@@ -38,8 +38,6 @@ with open(events_json, "r") as fp:
     events = json.load(fp)
 if "last_event" in events:
     event_date = datetime.datetime.fromisoformat(events["last_event"])
-    if event_date.date() == datetime.datetime.now().date():
-        event_date = event_date + datetime.timedelta(days=1)
 limit = None
 exercise = None
 answer = None
