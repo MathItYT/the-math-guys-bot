@@ -159,7 +159,7 @@ async def activity() -> None:
     limit = event_date + datetime.timedelta(minutes=10)
     discord_timestamp = int(limit.timestamp())
     print(f"[ANSWER] {answer}")
-    await general.send(f"@everyone Tienen hasta las <t:{discord_timestamp}:T> para enviar sus respuestas al evento de hoy. Acumularán $0.5 dólares para ganar a fin de mes. ¡Solo respuestas hasta que se termine el tiempo o alguien responda! ¡Buena suerte!\n\n**Ejercicio:**\n```\n{exercise}\n```", allowed_mentions=discord.AllowedMentions(everyone=True))
+    await general.send(f"@everyone Tienen hasta las <t:{discord_timestamp}:T> para enviar sus respuestas al evento de hoy. Acumularán $0.5 dólares para ganar a fin de mes. ¡Solo respuestas hasta que se termine el tiempo o alguien responda! ¡Buena suerte!\n\n**Ejercicio:**\n```\n{exercise}```", allowed_mentions=discord.AllowedMentions(everyone=True))
     check_time.start()
 
 
@@ -167,14 +167,15 @@ async def activity() -> None:
 async def check_time() -> None:
     global limit, answer, event_date, exercise
     now = datetime.datetime.now(datetime.timezone.utc)
+    print(f"[TIME] {now} [LIMIT] {limit}")
     if now >= limit:
         general = bot.get_channel(GENERAL_ID)
         await general.send("@everyone Se ha acabado el tiempo para enviar sus respuestas al evento de hoy.")
-        check_time.stop()
         limit = None
         answer = None
         exercise = None
         event_date = event_date + datetime.timedelta(days=1)
+        check_time.stop()
 
 
 def main():
