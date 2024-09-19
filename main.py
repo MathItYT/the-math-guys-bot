@@ -136,7 +136,7 @@ def generate_question_and_answer(argv) -> None:
     global exercise, answer
     generate.init_modules(True)
     modules = generate.filtered_modules["train-easy"]
-    modules = random.choice(modules)
+    modules = random.choice(list(modules.values()))
     problem, _ = generate.sample_from_module(modules)
     exercise = problem.question
     answer = problem.answer
