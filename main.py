@@ -13,9 +13,6 @@ from mathematics_dataset.mathematics_dataset import generate
 import random
 from the_math_guys_bot import message_history
 from pydantic import BaseModel, Field
-import sys
-
-sys.exit = lambda *args: None
 
 
 load_dotenv()
@@ -135,7 +132,7 @@ async def clear_history(ctx: commands.Context):
         ctx.send("No tienes permisos para ejecutar este comando.")
 
 
-def generate_question_and_answer(argv) -> None:
+def generate_question_and_answer() -> None:
     global exercise, answer
     generate.init_modules(True)
     modules = generate.filtered_modules["train-easy"]
@@ -156,7 +153,7 @@ async def activity() -> None:
         return
     with open(events_json, "w") as fp:
         json.dump({"last_event": event_date.isoformat()}, fp)
-    exercise, answer = app.run(generate_question_and_answer)
+    exercise, answer = generate_question_and_answer()
     event_date = event_date + datetime.timedelta(days=1)
     general = bot.get_channel(GENERAL_ID)
     limit = event_date + datetime.timedelta(minutes=10)
@@ -181,7 +178,7 @@ async def check_time() -> None:
 
 
 def main():
-    bot.run(DISCORD_TOKEN)
+    app.run(lambda argv: bot.run(DISCORD_TOKEN))
 
 
 if __name__ == "__main__":
