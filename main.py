@@ -4,8 +4,14 @@ from typing import Final
 from the_math_guys_bot.handle_message import handle_message, handle_welcome_message, clear_messages
 from the_math_guys_bot.premium.intelligent_response import premium_handle_message
 import discord
-from discord.ext import commands
+from discord.ext import commands, tasks
 import json
+import datetime
+from pathlib import Path
+from mathematics_dataset.mathematics_dataset import generate
+import random
+from the_math_guys_bot import message_history
+from pydantic import BaseModel, Field
 
 
 load_dotenv()
@@ -16,13 +22,70 @@ SERVER_ID: Final[int] = 1045453708642758657
 MATHLIKE_ID: Final[int] = 546393436668952663
 
 bot: commands.Bot = commands.Bot(description="Soy propiedad de The Math Guys :)", intents=discord.Intents.all())
-connections = {}
+
+
+class AnswerClassifier(BaseModel):
+    answer_classify: bool | None = Field(description="Si es la respuesta correcta, es True. Si es incorrecta, False. Si no corresponde a una respuesta, es None.")
+
+
+event_date = datetime.datetime.now(datetime.timezone.utc)
+events_json = Path("events.json")
+if not events_json.exists():
+    with open(events_json, "w") as fp:
+        json.dump({}, fp)
+with open(events_json, "r") as fp:
+    events = json.load(fp)
+if "last_event" in events:
+    event_date = datetime.datetime.fromisoformat(events["last_event"])
+    if event_date.date() == datetime.datetime.now().date():
+        event_date = event_date + datetime.timedelta(days=1)
+limit = None
+answer = None
+
 
 
 @bot.event
 async def on_ready():
     await bot.change_presence(activity=discord.Game(name="matemáticas"))
+    activity.start()
     print(f"Logged in as {bot.user}!")
+
+
+async def handle_answer(message: discord.Message):
+    global limit, answer
+    username: str = str(message.author)
+    user_message: str = message.content
+    channel: str = str(message.channel)
+    print(f'[{channel}] {username}: "{user_message}"')
+    if message.author.id == MATHLIKE_ID:
+        return
+    client = message_history.client
+    response = client.beta.chat.completions.parse(
+        model="gpt-4o-2024-08-06",
+        messages=[
+            {
+                "role": "system",
+                "content": f"La respuesta correcta es {answer}. Debes clasificar la respuesta del usuario. Si es correcta, answer_classify es True. Si es incorrecta, answer_classify es False. Si no corresponde a una respuesta, answer_classify es None."
+            },
+            {
+                "role": "user",
+                "content": user_message
+            }
+        ],
+        response_format=AnswerClassifier
+    )
+    answer_classification = response.choices[0].message.parsed.answer_classify
+    if answer_classification is None:
+        return
+    if answer_classification:
+        general = bot.get_channel(GENERAL_ID)
+        await general.send(f"{message.author.mention} ha respondido correctamente al evento de hoy. ¡Felicidades!", reference=message)
+        check_time.stop()
+        limit = None
+        answer = None
+    else:
+        general = bot.get_channel(GENERAL_ID)
+        await general.send(f"{message.author.mention} Respuesta incorrecta, ¡sigue intentando!", reference=message)
 
 
 @bot.event
@@ -32,6 +95,9 @@ async def on_message(message: discord.Message):
     username: str = str(message.author)
     user_message: str = message.content
     channel: str = str(message.channel)
+    if limit is not None and datetime.datetime.now(datetime.timezone.utc) < limit:
+        handle_answer(message)
+        return
     with open("premium.json", "r") as fp:
         premium_users = json.load(fp)
     if message.author.id in premium_users:
@@ -57,6 +123,42 @@ async def clear_history(ctx: commands.Context):
         ctx.send("El historial de conversación ha sido borrado.")
     else:
         ctx.send("No tienes permisos para ejecutar este comando.")
+
+
+@tasks.loop(hours=2)
+async def activity() -> None:
+    global event_date, limit, answer
+    now = datetime.datetime.now(datetime.timezone.utc)
+    delta = now - event_date
+    if delta.total_seconds() < 0:
+        return
+    with open(events_json, "w") as fp:
+        json.dump({"last_event": event_date.isoformat()}, fp)
+    generate.init_modules()
+    modules = generate.filtered_modules["train-easy"]
+    modules = random.choice(modules)
+    problem, _ = generate.sample_from_module(modules)
+    exercise = problem.question
+    answer = problem.answer
+    event_date = event_date + datetime.timedelta(days=1)
+    general = bot.get_channel(GENERAL_ID)
+    limit = event_date + datetime.timedelta(minutes=10)
+    discord_timestamp = int(event_date.timestamp())
+    print(f"[ANSWER] {answer}")
+    await general.send(f"@everyone Tienen hasta las <t:{discord_timestamp}:T> para enviar sus respuestas al evento de hoy. Acumularán $0.5 dólares para ganar a fin de mes. ¡Solo respuestas hasta que se termine el tiempo o alguien responda! ¡Buena suerte!\n\n**Ejercicio:** {exercise}", allowed_mentions=discord.AllowedMentions(everyone=True))
+    check_time.start()
+
+
+@tasks.loop(minutes=10)
+async def check_time() -> None:
+    global limit, answer
+    now = datetime.datetime.now(datetime.timezone.utc)
+    if now >= limit:
+        general = bot.get_channel(GENERAL_ID)
+        await general.send("@everyone Se ha acabado el tiempo para enviar sus respuestas al evento de hoy.")
+        check_time.stop()
+        limit = None
+        answer = None
 
 
 def main():
