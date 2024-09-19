@@ -148,10 +148,9 @@ def generate_question_and_answer() -> None:
 async def activity() -> None:
     global event_date, limit, answer, exercise
     now = datetime.datetime.now(datetime.timezone.utc)
-    delta = now - event_date
     if limit is not None:
         return
-    if delta.total_seconds() < 0:
+    if now < event_date:
         return
     with open(events_json, "w") as fp:
         json.dump({"last_event": event_date.isoformat()}, fp)
