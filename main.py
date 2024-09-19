@@ -134,7 +134,7 @@ async def clear_history(ctx: commands.Context):
 
 def generate_question_and_answer(argv) -> None:
     global exercise, answer
-    generate.init_modules()
+    generate.init_modules(True)
     modules = generate.filtered_modules["train-easy"]
     modules = random.choice(modules)
     problem, _ = generate.sample_from_module(modules)
