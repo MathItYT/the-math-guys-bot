@@ -96,7 +96,7 @@ async def on_message(message: discord.Message):
     user_message: str = message.content
     channel: str = str(message.channel)
     if limit is not None and datetime.datetime.now(datetime.timezone.utc) < limit:
-        handle_answer(message)
+        await handle_answer(message)
         return
     with open("premium.json", "r") as fp:
         premium_users = json.load(fp)
