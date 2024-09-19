@@ -54,7 +54,7 @@ async def on_ready():
 
 
 async def handle_answer(message: discord.Message):
-    global limit, answer, exercise, event_date
+    global limit, answer, exercise, event_date, events
     username: str = str(message.author)
     user_message: str = message.content
     channel: str = str(message.channel)
@@ -87,6 +87,11 @@ async def handle_answer(message: discord.Message):
         answer = None
         exercise = None
         event_date = event_date + datetime.timedelta(days=1)
+        if "winners" not in events:
+            events["winners"] = {}
+        events["winners"][str(message.author.id)] = events["winners"].get(str(message.author.id), 0) + 0.5
+        with open(events_json, "w") as fp:
+            json.dump(events, fp)
     else:
         general = bot.get_channel(GENERAL_ID)
         await general.send(f"{message.author.mention} Respuesta incorrecta, ¡sigue intentando!", reference=message)
@@ -139,11 +144,13 @@ def generate_question_and_answer() -> None:
     answer = problem.answer
 
 
-@tasks.loop(minutes=2)
+@tasks.loop(seconds=30)
 async def activity() -> None:
     global event_date, limit, answer, exercise
     now = datetime.datetime.now(datetime.timezone.utc)
     delta = now - event_date
+    if limit is not None:
+        return
     if delta.total_seconds() < 0:
         return
     with open(events_json, "w") as fp:
