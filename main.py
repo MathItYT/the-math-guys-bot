@@ -125,6 +125,16 @@ async def clear_history(ctx: commands.Context):
         ctx.send("No tienes permisos para ejecutar este comando.")
 
 
+def generate_question_and_answer() -> tuple[str, str]:
+    generate.init_modules()
+    modules = generate.filtered_modules["train-easy"]
+    modules = random.choice(modules)
+    problem, _ = generate.sample_from_module(modules)
+    exercise = problem.question
+    answer = problem.answer
+    return exercise, answer
+
+
 @tasks.loop(minutes=2)
 async def activity() -> None:
     global event_date, limit, answer
@@ -134,12 +144,7 @@ async def activity() -> None:
         return
     with open(events_json, "w") as fp:
         json.dump({"last_event": event_date.isoformat()}, fp)
-    generate.init_modules()
-    modules = generate.filtered_modules["train-easy"]
-    modules = random.choice(modules)
-    problem, _ = generate.sample_from_module(modules)
-    exercise = problem.question
-    answer = problem.answer
+    exercise, answer = generate_question_and_answer()
     event_date = event_date + datetime.timedelta(days=1)
     general = bot.get_channel(GENERAL_ID)
     limit = event_date + datetime.timedelta(minutes=10)
