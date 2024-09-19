@@ -148,6 +148,7 @@ def generate_question_and_answer() -> None:
 async def activity() -> None:
     global event_date, limit, answer, exercise
     now = datetime.datetime.now(datetime.timezone.utc)
+    print(event_date)
     if limit is not None:
         return
     if now < event_date:
