@@ -157,7 +157,7 @@ async def activity() -> None:
     event_date = event_date + datetime.timedelta(days=1)
     general = bot.get_channel(GENERAL_ID)
     limit = event_date + datetime.timedelta(minutes=10)
-    discord_timestamp = int(event_date.timestamp())
+    discord_timestamp = int(limit.timestamp())
     print(f"[ANSWER] {answer}")
     await general.send(f"@everyone Tienen hasta las <t:{discord_timestamp}:T> para enviar sus respuestas al evento de hoy. Acumularán $0.5 dólares para ganar a fin de mes. ¡Solo respuestas hasta que se termine el tiempo o alguien responda! ¡Buena suerte!\n\n**Ejercicio:** {exercise}", allowed_mentions=discord.AllowedMentions(everyone=True))
     check_time.start()
