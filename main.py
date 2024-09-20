@@ -37,7 +37,7 @@ if not events_json.exists():
 with open(events_json, "r") as fp:
     events = json.load(fp)
 if "last_event" in events:
-    event_date = datetime.datetime.fromisoformat(events["last_event"])
+    event_date = datetime.datetime.fromisoformat(events["last_event"]) + datetime.timedelta(days=1)
 limit = None
 exercise = None
 answer = None
