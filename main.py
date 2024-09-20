@@ -151,8 +151,9 @@ async def activity() -> None:
         return
     if now < event_date:
         return
+    events["last_event"] = event_date.isoformat()
     with open(events_json, "w") as fp:
-        json.dump({"last_event": event_date.isoformat()}, fp)
+        json.dump(events, fp)
     generate_question_and_answer()
     general = bot.get_channel(GENERAL_ID)
     limit = event_date + datetime.timedelta(minutes=10)
