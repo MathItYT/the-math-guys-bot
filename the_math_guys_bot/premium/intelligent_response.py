@@ -7,7 +7,7 @@ import pprint
 from shutil import rmtree, make_archive
 from typing import Literal
 from markdown_it import MarkdownIt
-from mdit_py_plugins.texmath import texmath_plugin
+from mdit_py_plugins.dollarmath import dollarmath_plugin
 from mdit_py_plugins.amsmath import amsmath_plugin
 from mdit_py_plugins.footnote import footnote_plugin
 import fitz as pymupdf
@@ -276,7 +276,7 @@ async def get_math_response(input_message: discord.Message, ctx: commands.Contex
     print(f"[TheMathGuysBot]: {response.choices[0].message.content}")
     message_history.math_messages.append({"role": "assistant", "content": response.choices[0].message.content})
     content = response.choices[0].message.content
-    m_d = MarkdownIt(options_update={"highlight": highlight_code}).use(texmath_plugin).use(amsmath_plugin).use(footnote_plugin).enable('table')
+    m_d = MarkdownIt(options_update={"highlight": highlight_code}).use(dollarmath_plugin).use(amsmath_plugin).use(footnote_plugin).enable('table')
     with open("math.html", "w") as fp:
         fp.write(m_d.render(content))
     path = os.path.abspath("math.html")
