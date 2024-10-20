@@ -5,13 +5,13 @@ import os
 from pathlib import Path
 import pprint
 from shutil import rmtree, make_archive
-from markdown_pdf import MarkdownPdf, Section
 from typing import Literal
 from markdown_it import MarkdownIt
 from mdit_py_plugins.texmath import texmath_plugin
 from mdit_py_plugins.amsmath import amsmath_plugin
 from mdit_py_plugins.footnote import footnote_plugin
 import fitz as pymupdf
+from pyhtml2pdf import converter
 
 import discord
 from discord.ext import pages, commands
@@ -276,10 +276,11 @@ async def get_math_response(input_message: discord.Message, ctx: commands.Contex
     print(f"[TheMathGuysBot]: {response.choices[0].message.content}")
     message_history.math_messages.append({"role": "assistant", "content": response.choices[0].message.content})
     content = response.choices[0].message.content
-    pdf = MarkdownPdf(toc_level=2)
-    pdf.m_d = MarkdownIt("js-default", options_update={"highlight": highlight_code}).use(texmath_plugin).use(amsmath_plugin).use(footnote_plugin).enable('table')
-    pdf.add_section(Section(content, toc=False), user_css=".markdown-body {background-color: #161616; color: #EBEBEB;}")
-    pdf.save("math.pdf")
+    m_d = MarkdownIt("js-default", options_update={"highlight": highlight_code}).use(texmath_plugin).use(amsmath_plugin).use(footnote_plugin).enable('table')
+    with open("math.html", "w") as fp:
+        fp.write(m_d.render(content))
+    path = os.path.abspath("math.html")
+    converter.convert(f"file://{path}", "math.pdf")
     pdf = pymupdf.open("math.pdf")
     pages = [pdf.load_page(i) for i in range(pdf.page_count)]
     pixs = [page.get_pixmap() for page in pages]
