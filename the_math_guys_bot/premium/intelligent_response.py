@@ -280,7 +280,7 @@ async def get_math_response(input_message: discord.Message, ctx: commands.Contex
     with open("math.html", "w") as fp:
         fp.write(m_d.render(content))
     path = os.path.abspath("math.html")
-    converter.convert(f"file://{path}", "math.pdf")
+    converter.convert(f"file://{path}", "math.pdf", timeout=5)
     pdf = pymupdf.open("math.pdf")
     pages = [pdf.load_page(i) for i in range(pdf.page_count)]
     pixs = [page.get_pixmap() for page in pages]
