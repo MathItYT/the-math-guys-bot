@@ -3,7 +3,6 @@ const fs = require('fs');
 const hljs = require('highlight.js');
 const { markedHighlight } = require('marked-highlight');
 const markedKatex = require('marked-katex-extension');
-const nodeHtmlToImage = require('node-html-to-image');
 
 const main = () => {
     const marked = new Marked(
@@ -44,11 +43,7 @@ const main = () => {
     ${marked.parse(markdown)}
   </body>
 </html>`;
-    nodeHtmlToImage({
-        output: 'math.png',
-        html: html,
-        puppeteerArgs: ['--no-sandbox', '--disable-setuid-sandbox']
-    });
+    fs.writeFileSync('math.html', html);
 };
 
 main();
