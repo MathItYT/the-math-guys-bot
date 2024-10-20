@@ -265,6 +265,26 @@ def get_pods_data(pods: list[dict[str, str]]) -> tuple[list[str], list[str]]:
     return text_results, image_results
 
 
+HTML_TEMPLATE: str = """
+<!DOCTYPE html>
+<!-- KaTeX requires the use of the HTML5 doctype. Without it, KaTeX may not render properly -->
+<html>
+  <head>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css" integrity="sha384-nB0miv6/jRmo5UMMR1wu3Gz6NLsoTkbqJghGIsx//Rlm+ZU03BU6SQNC66uf4l5+" crossorigin="anonymous">
+
+    <!-- The loading of KaTeX is deferred to speed up page rendering -->
+    <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js" integrity="sha384-7zkQWkzuo3B5mTepMUcHkMB5jZaolc2xDwL6VFqjFALcbeS9Ggm/Yr2r3Dy4lfFg" crossorigin="anonymous"></script>
+
+    <!-- To automatically render math in text elements, include the auto-render extension: -->
+    <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/contrib/auto-render.min.js" integrity="sha384-43gviWU0YVjaDtb/GhzOouOXtZMP/7XUzwPTstBeZFe/+rCMvRwr4yROQP43s0Xk" crossorigin="anonymous"
+        onload="renderMathInElement(document.body);"></script>
+  </head>
+  <body>
+    REPLACE_ME
+  </body>
+</html>"""
+
+
 async def get_math_response(input_message: discord.Message, ctx: commands.Context) -> None:
     message_history.math_messages.append({"role": "user", "content": input_message.content})
     response = client.chat.completions.create(
@@ -276,6 +296,7 @@ async def get_math_response(input_message: discord.Message, ctx: commands.Contex
     print(f"[TheMathGuysBot]: {response.choices[0].message.content}")
     message_history.math_messages.append({"role": "assistant", "content": response.choices[0].message.content})
     content = response.choices[0].message.content
+    content = HTML_TEMPLATE.replace("REPLACE_ME", content)
     m_d = MarkdownIt(options_update={"highlight": highlight_code}).use(dollarmath_plugin).use(footnote_plugin).enable('table')
     with open("math.html", "w") as fp:
         fp.write(m_d.render(content))
