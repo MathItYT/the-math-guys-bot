@@ -298,7 +298,8 @@ async def get_math_response(input_message: discord.Message, ctx: commands.Contex
     content = response.choices[0].message.content
     content = HTML_TEMPLATE.replace("REPLACE_ME", content)
     m_d = MarkdownIt(options_update={"highlight": highlight_code}).use(dollarmath_plugin).use(footnote_plugin).enable('table')
-    with open("math.html", "w") as fp:
+    with open("math.html", "w", encoding="utf-8") as fp:
+        print(m_d.render(content))
         fp.write(m_d.render(content))
     path = os.path.abspath("math.html")
     converter.convert(f"file://{path}", "math.pdf", timeout=5)
