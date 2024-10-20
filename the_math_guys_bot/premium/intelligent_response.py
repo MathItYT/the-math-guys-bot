@@ -278,7 +278,7 @@ async def get_math_response(input_message: discord.Message, ctx: commands.Contex
     content = response.choices[0].message.content
     pdf = MarkdownPdf(toc_level=2)
     pdf.m_d = MarkdownIt("js-default", options_update={"highlight": highlight_code}).use(texmath_plugin).use(amsmath_plugin).use(footnote_plugin).enable('table')
-    pdf.add_section(Section(content, toc=False), user_css="* {color: #ebebeb;}\n\nbody {background-color: #161616;}")
+    pdf.add_section(Section(content, toc=False), user_css=".markdown-body {background-color: #161616; color: #EBEBEB;}")
     pdf.save("math.pdf")
     pdf = pymupdf.open("math.pdf")
     pages = [pdf.load_page(i) for i in range(pdf.page_count)]
