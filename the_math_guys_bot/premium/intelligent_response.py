@@ -5,6 +5,7 @@ import os
 from pathlib import Path
 import pprint
 from shutil import rmtree, make_archive
+import subprocess
 from typing import Literal
 
 import discord
@@ -16,6 +17,8 @@ from googleapiclient.discovery import build
 
 from the_math_guys_bot import message_history
 from the_math_guys_bot.handle_message import handle_message
+
+import pymupdf
 
 
 client = message_history.client
@@ -53,53 +56,6 @@ class ActionAndPrintableOutput(BaseModel):
 
 class WebQuery(BaseModel):
     query: str = Field(description="La consulta que se debe hacer en internet, en texto plano Unicode.")
-
-
-class StepsPaginator(pages.Paginator):
-    def __init__(
-        self,
-        input_message: discord.Message,
-        action: str,
-        printable_math: str,
-        steps: list[Steps],
-        imgs: list[dict[str, str]],
-        **kwargs
-    ):
-        super().__init__(
-            pages=self.get_pages(input_message, action, printable_math, steps, imgs),
-            **kwargs
-        )
-    
-    def get_pages(
-        self,
-        input_message: discord.Message,
-        action: str,
-        printable_math: str,
-        steps: list[Steps],
-        imgs: list[dict[str, str]]
-    ) -> list[discord.Embed]:
-        pages = [
-            discord.Embed(title=f"{action} {printable_math}")
-        ]
-        pages[0].set_thumbnail(url=input_message.author.avatar.url)
-        pages[0].set_author(name=input_message.author.display_name, icon_url=input_message.author.avatar.url)
-        for i, step in enumerate(steps, start=1):
-            pages[-1].add_field(name=f"Paso {i}", value=step.output)
-            if len(pages[-1].fields) == 5:
-                pages.append(discord.Embed(title=f"{action} {printable_math}"))
-                pages[-1].set_thumbnail(url=input_message.author.avatar.url)
-                pages[-1].set_author(name=input_message.author.display_name, icon_url=input_message.author.avatar.url)
-        pages[-1].add_field(name="Imágenes", value="Al final se encuentran las imágenes de los resultados")
-        for i, step in enumerate(steps, start=1):
-            pages.append(discord.Embed(title=f"Detalles paso {i}", description=step.explanation))
-            pages[-1].set_thumbnail(url=input_message.author.avatar.url)
-            pages[-1].set_author(name=input_message.author.display_name, icon_url=input_message.author.avatar.url)
-        for i, img in enumerate(imgs, start=1):
-            pages.append(discord.Embed(title=f"Imagen {i}"))
-            pages[-1].set_thumbnail(url=input_message.author.avatar.url)
-            pages[-1].set_author(name=input_message.author.display_name, icon_url=input_message.author.avatar.url)
-            pages[-1].set_image(url=img["image_url"]["url"])
-        return pages
 
 
 class FileOrFolder(BaseModel):
@@ -294,65 +250,54 @@ def get_pods_data(pods: list[dict[str, str]]) -> tuple[list[str], list[str]]:
     return text_results, image_results
 
 
-async def get_math_paginator_response(input_message: discord.Message, ctx: commands.Context) -> None:
-    math_messages = message_history.math_messages
-    images = await get_images(input_message)
-    math_messages.append({"role": "user", "content": [
-        {"type": "text", "text": input_message.content},
-        *[{"type": "image_url", "image_url": {"url": f"data:{content_type};base64,{image_data}"}} for content_type, image_data in images]
-    ]})
-    tex = client.beta.chat.completions.parse(
-        messages=math_messages,
-        model="gpt-4o-2024-08-06",
-        response_format=ActionAndPrintableOutput
+LATEX_TEMPLATE: str = r"""\documentclass{article}
+\usepackage[spanish]{babel}
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage{xcolor}
+\usepackage{mlmodern}
+\usepackage{minted}
+\usepackage[hybrid,fencedCode,hashEnumerators]{markdown}
+
+\definecolor{bg}{HTML}{161616}
+\definecolor{fg}{HTML}{EBEBEB}
+
+\pagecolor{bg}
+\color{fg}
+
+\begin{document}
+\begin{markdown}
+REPLACE_ME
+\end{markdown}
+\end{document}
+"""
+
+
+async def get_math_response(input_message: discord.Message, ctx: commands.Context) -> None:
+    message_history.math_messages.append({"role": "user", "content": input_message.content})
+    response = client.chat.completions.create(
+        model="o1-mini",
+        messages=message_history.math_messages
     )
-    formula = tex.choices[0].message
-    if not formula.parsed:
-        return ""
-    printable_string = formula.parsed.printable_math
-    action = formula.parsed.action
-    print(f"Formula: {printable_string}")
-    print(f"Action: {action}")
-    math_messages.append({"role": "assistant", "parsed": {"printable_math": printable_string, "action": action}, "content": formula.content})
-    simplified_formula = requests.get(f"http://api.wolframalpha.com/v2/query", params={
-        "input": f"{action} {printable_string}",
-        "appid": message_history.WOLFRAM_APP_ID,
-        "format": "plaintext,image",
-        "output": "json"
-    }).json()
-    queryresult = simplified_formula.get("queryresult", {})
-    pods = queryresult.get("pods") or [queryresult.get("pod")]
-    if len(pods) == 1 and not pods[0]:
-        pods = []
-    text_results, image_results = get_pods_data(pods)
-    text_results = "\n\n".join(text_results)
-    imgs = [{"type": "image_url", "image_url": {"url": image}} for image in image_results]
-    wolfram_answer = {"role": "user", "content": [
-        {"type": "text", "text": f"Problem:\n{action} {printable_string}\n\nWolfram Alpha's solution:\n{text_results}\n\nRemember to not use LaTeX, only Unicode chars"},
-    ]}
-    response = client.beta.chat.completions.parse(
-        messages=[{"role": "system", "content": "Debes ordenar estos resultados de Wolfram Alpha en un texto natural y entendible completamente en español. Si Wolfram Alpha no te da solución en el campo 'Wolfram Alpha's solution', la respuesta debe ser nula. No uses LaTeX, solo texto plano Unicode."}, wolfram_answer],
-        model="gpt-4o-2024-08-06",
-        response_format=OrderedMessage
-    )
-    ordered_message = response.choices[0].message.parsed.ordered_message or ""
-    ordered_message = [
-        {"type": "text", "text": ordered_message}
-    ]
-    response = client.beta.chat.completions.parse(
-        messages=[
-            {
-                "role": "system",
-                "content": "Usando la respuesta final de Wolfram Alpha a un prompt especificado ahí mismo, responde al usuario con un mensaje humorístico, a veces sarcástico, y natural, paso a paso. Si Wolfram Alpha no da solución, la lista de pasos es vacía. Si Wolfram Alpha dice algo, debe haber una lista de pasos con explicaciones y resultados sin LaTeX, solo texto plano Unicode. Cada explicación debe ser lo más corta posible, sin exceder los 1000 caracteres."
-            },
-            {"role": "user", "content": ordered_message}
-        ],
-        model="gpt-4o-2024-08-06",
-        response_format=IntelligentMath
-    )
-    steps = response.choices[0].message.parsed.steps
-    paginator = StepsPaginator(input_message, action, printable_string, steps, imgs)
-    await paginator.send(ctx, target=input_message.channel, reference=input_message)
+    if not response.choices[0].message.content:
+        return
+    print(f"[TheMathGuysBot]: {response.choices[0].message.content}")
+    message_history.math_messages.append({"role": "assistant", "content": response.choices[0].message.content})
+    content = response.choices[0].message.content
+    content = LATEX_TEMPLATE.replace("REPLACE_ME", content)
+    with open("math.tex", "w") as fp:
+        fp.write(content)
+    subprocess.check_call(["pdflatex", "-shell-escape", "math.tex"])
+    pdf = pymupdf.open("math.pdf")
+    pages = [pdf.load_page(i) for i in range(pdf.page_count)]
+    pixs = [page.get_pixmap() for page in pages]
+    file_names = [f"page{i}.png" for i in range(len(pixs))]
+    for pix, file_name in zip(pixs, file_names):
+        pix.pil_save(file_name)
+    await ctx.send(files=[discord.File(file_name) for file_name in file_names], reference=input_message)
+    pdf.close()
+    for file_name in file_names:
+        os.remove(file_name)
 
 
 async def get_research_response(message: discord.Message, ctx: commands.Context) -> None:
@@ -406,7 +351,7 @@ async def premium_handle_message(message: discord.Message, ctx: commands.Context
         return
     premium_messages.append({"role": "assistant", "content": response.choices[0].message.content, "parsed": {"necessary_answer": necessary_answer, "type": type_}})
     if type_ == "solve_math":
-        await get_math_paginator_response(message, ctx)
+        await get_math_response(message, ctx)
         return
     if type_ == "research":
         await get_research_response(message, ctx)
