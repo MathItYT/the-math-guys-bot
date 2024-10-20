@@ -1,93 +1,105 @@
-¡Hola! Vamos a resolver el sistema de ecuaciones que has proporcionado:
+¡Hola! Claro que sí, te ayudaré a resolver el sistema de ecuaciones que has proporcionado. Vamos a resolverlo paso a paso.
 
-$$\begin{cases} \frac{x - 2}{4} - \frac{y - x}{3} = x - 7 \\\frac{3x - y}{8} - \frac{2}{3y - x} \cdot \frac{1}{6} = y - 13 \end{cases}$$
+## Sistema de Ecuaciones
 
-### Paso 1: Simplificar la Primera Ecuación
+$$\begin{cases} \dfrac{x - 2}{4} - \dfrac{y - x}{3} = x - 7 \\ \dfrac{3x - y}{8} - \dfrac{2}{3y - x} = y - 13 \end{cases}$$
 
-La primera ecuación es lineal:
+### **Primera Ecuación**
 
 $$\frac{x - 2}{4} - \frac{y - x}{3} = x - 7$$
 
-Multiplicamos ambos lados por 12 (el mínimo común múltiplo de 4 y 3) para eliminar los denominadores:
+**Paso 1:** Encontrar un denominador común para las fracciones, que es 12.
 
-$$12 \left( \frac{x - 2}{4} \right) - 12 \left( \frac{y - x}{3} \right) = 12(x - 7)$$
+$$\frac{3(x - 2)}{12} - \frac{4(y - x)}{12} = x - 7$$
 
-Simplificando:
+**Paso 2:** Simplificar la ecuación.
 
-$$3(x - 2) - 4(y - x) = 12x - 84$$
+$$\frac{3x - 6 - 4y + 4x}{12} = x - 7 \\\frac{7x - 6 - 4y}{12} = x - 7$$
 
-Expandiendo y agrupando términos semejantes:
+**Paso 3:** Eliminar el denominador multiplicando ambos lados por 12.
 
-$$3x - 6 - 4y + 4x = 12x - 84 \\7x - 4y - 6 = 12x - 84 \\-5x - 4y = -78 \\5x + 4y = 78 \quad \text{(Ecuación 1)}$$
+$$7x - 6 - 4y = 12x - 84$$
 
-### Paso 2: Simplificar la Segunda Ecuación
+**Paso 4:** Reorganizar los términos para aislar las variables.
 
-La segunda ecuación es:
+$$7x - 12x - 4y = -84 + 6 \\-5x - 4y = -78 \\5x + 4y = 78 \quad \text{(Ecuación A)}$$
 
-$$\frac{3x - y}{8} - \frac{2}{3y - x} \cdot \frac{1}{6} = y - 13$$
+### **Segunda Ecuación**
 
-Simplificamos el término $\frac{2}{3y - x} \cdot \frac{1}{6}$:
+$$\frac{3x - y}{8} - \frac{2}{3y - x} = y - 13$$
 
-$$\frac{2}{3y - x} \cdot \frac{1}{6} = \frac{2}{6(3y - x)} = \frac{1}{3(3y - x)}$$
+**Paso 1:** Despejar una de las variables usando la Ecuación A. Por ejemplo, despejamos $ x $:
 
-Entonces, la ecuación se convierte en:
+$$5x + 4y = 78 \\5x = 78 - 4y \\x = \frac{78 - 4y}{5}$$
 
-$$\frac{3x - y}{8} - \frac{1}{3(3y - x)} = y - 13 \quad \text{(Ecuación 2)}$$
+**Paso 2:** Sustituir $ x $ en la segunda ecuación.
 
-### Paso 3: Sustituir $x$ de la Ecuación 1 en la Ecuación 2
+$$\frac{3\left(\frac{78 - 4y}{5}\right) - y}{8} - \frac{2}{3y - \left(\frac{78 - 4y}{5}\right)} = y - 13$$
 
-De la **Ecuación 1**:
+**Paso 3:** Simplificar las expresiones.
 
-$$5x + 4y = 78 \\x = \frac{78 - 4y}{5}$$
+$$\frac{\frac{234 - 12y}{5} - y}{8} - \frac{2}{\frac{19y - 78}{5}} = y - 13 \\\frac{234 - 12y - 5y}{40} - \frac{10}{19y - 78} = y - 13 \\\frac{234 - 17y}{40} - \frac{10}{19y - 78} = y - 13$$
 
-Sustituimos $x$ en la **Ecuación 2**:
+**Paso 4:** Multiplicar toda la ecuación por el común denominador $ 40(19y - 78) $ para eliminar los denominadores.
 
-$$\frac{3\left(\frac{78 - 4y}{5}\right) - y}{8} - \frac{1}{3\left(3y - \frac{78 - 4y}{5}\right)} = y - 13$$
+$$(234 - 17y)(19y - 78) - 400 = 40(y - 13)(19y - 78)$$
 
-Después de simplificar (como se detalla en el análisis anterior), obtenemos una ecuación cuadrática en términos de $y$:
+**Paso 5:** Expandir y simplificar.
 
-$$3249y^2 - 56316y + 176636 = 0$$
+$$-323y^2 + 5772y - 18652 = 760y^2 - 13000y + 40560$$
 
-### Paso 4: Resolver la Ecuación Cuadrática para $y$
+$$1083y^2 - 18772y + 59212 = 0$$
+
+### **Resolución de la Ecuación Cuadrática**
+
+Tenemos la ecuación cuadrática:
+
+$$1083y^2 - 18772y + 59212 = 0$$
 
 Usamos la fórmula cuadrática:
 
-$$y = \frac{56316 \pm \sqrt{56316^2 - 4 \cdot 3249 \cdot 176636}}{2 \cdot 3249}$$
+$$y = \frac{18772 \pm \sqrt{(18772)^2 - 4 \cdot 1083 \cdot 59212}}{2 \cdot 1083}$$
 
-Calculando el discriminante:
+Calculando el discriminante $ D $:
 
-$$D = 56316^2 - 4 \cdot 3249 \cdot 176636 \approx 844,077,600$$
+$$D = 18772^2 - 4 \cdot 1083 \cdot 59212 = 352,387,984 - 259,706,384 = 92,681,600$$
 
-La raíz cuadrada de $D$ es aproximadamente 29,058.
+$$\sqrt{D} \approx 9630.24$$
 
-Entonces, las soluciones para $y$ son aproximadamente:
+**Soluciones para $ y $:**
 
-$$y_1 \approx \frac{56316 + 29058}{6498} \approx 13.13 \\y_2 \approx \frac{56316 - 29058}{6498} \approx 4.20$$
+$$y = \frac{18772 \pm 9630.24}{2166}$$
 
-### Paso 5: Encontrar los Valores Correspondientes de $x$
+1. **Primera Solución:**
 
-Usamos $x = \frac{78 - 4y}{5}$:
+$$y \approx \frac{18772 + 9630.24}{2166} \approx \frac{28402.24}{2166} \approx 13.11$$
 
-1. **Para $y \approx 4.20$:**
+2. **Segunda Solución:**
 
-$$x \approx \frac{78 - 4(4.20)}{5} = \frac{78 - 16.8}{5} = \frac{61.2}{5} = 12.24$$
+$$y \approx \frac{18772 - 9630.24}{2166} \approx \frac{9141.76}{2166} \approx 4.22$$
 
-2. **Para $y \approx 13.13$:**
+### **Obtención de $ x $ correspondiente**
 
-$$x \approx \frac{78 - 4(13.13)}{5} = \frac{78 - 52.52}{5} = \frac{25.48}{5} = 5.10$$
+Usamos la Ecuación A: $ 5x + 4y = 78 $
 
-### Soluciones Aproximadas del Sistema
+1. **Para $ y \approx 13.11 $:**
+
+$$5x + 4(13.11) = 78 \\5x + 52.44 = 78 \\5x = 25.56 \\x \approx 5.11$$
+
+2. **Para $ y \approx 4.22 $:**
+
+$$5x + 4(4.22) = 78 \\5x + 16.88 = 78 \\5x = 61.12 \\x \approx 12.22$$
+
+### **Soluciones del Sistema**
 
 Por lo tanto, las soluciones aproximadas del sistema son:
 
 1. **Primera Solución:**
-   $$   x \approx 12.24, \quad y \approx 4.20   $$
+   $$   (x, y) \approx (5.11, \ 13.11)   $$
 
 2. **Segunda Solución:**
-   $$   x \approx 5.10, \quad y \approx 13.13   $$
+   $$   (x, y) \approx (12.22, \ 4.22)   $$
 
-### Verificación de las Soluciones
+---
 
-Es recomendable verificar estas soluciones sustituyéndolas de nuevo en las ecuaciones originales para asegurar su precisión. Sin embargo, dado que las soluciones han sido obtenidas mediante aproximaciones, pequeñas discrepancias pueden existir.
-
-Si necesitas una mayor precisión o una solución exacta, se puede emplear métodos numéricos más avanzados o herramientas computacionales.
+**Nota:** Debido a la complejidad de la segunda ecuación, las soluciones se presentan de manera aproximada. Para obtener valores exactos, se necesitaría resolver la ecuación cuadrática con mayor precisión o utilizar métodos numéricos avanzados.

@@ -46,7 +46,8 @@ const main = () => {
 </html>`;
     nodeHtmlToImage({
         output: 'math.png',
-        html: html
+        html: html,
+        puppeteerArgs: ['--no-sandbox', '--disable-setuid-sandbox']
     });
 };
 
