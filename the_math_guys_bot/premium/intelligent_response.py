@@ -5,8 +5,13 @@ import os
 from pathlib import Path
 import pprint
 from shutil import rmtree, make_archive
-import subprocess
+from markdown_pdf import MarkdownPdf, Section
 from typing import Literal
+from markdown_it import MarkdownIt
+from mdit_py_plugins.texmath import texmath_plugin
+from mdit_py_plugins.amsmath import amsmath_plugin
+from mdit_py_plugins.footnote import footnote_plugin
+import fitz as pymupdf
 
 import discord
 from discord.ext import pages, commands
@@ -18,7 +23,17 @@ from googleapiclient.discovery import build
 from the_math_guys_bot import message_history
 from the_math_guys_bot.handle_message import handle_message
 
-import pymupdf
+from pygments import highlight
+from pygments.formatters import HtmlFormatter
+from pygments.lexers import get_lexer_by_name
+
+
+def highlight_code(code, name, attrs):
+    """Highlight a block of code"""
+    lexer = get_lexer_by_name(name)
+    formatter = HtmlFormatter()
+
+    return highlight(code, lexer, formatter)
 
 
 client = message_history.client
@@ -250,29 +265,6 @@ def get_pods_data(pods: list[dict[str, str]]) -> tuple[list[str], list[str]]:
     return text_results, image_results
 
 
-LATEX_TEMPLATE: str = r"""\documentclass{article}
-\usepackage[spanish]{babel}
-\usepackage{amsmath}
-\usepackage{amssymb}
-\usepackage{xcolor}
-\usepackage{mlmodern}
-\usepackage{minted}
-\usepackage[hybrid,fencedCode,hashEnumerators]{markdown}
-
-\definecolor{bg}{HTML}{161616}
-\definecolor{fg}{HTML}{EBEBEB}
-
-\pagecolor{bg}
-\color{fg}
-
-\begin{document}
-\begin{markdown}
-REPLACE_ME
-\end{markdown}
-\end{document}
-"""
-
-
 async def get_math_response(input_message: discord.Message, ctx: commands.Context) -> None:
     message_history.math_messages.append({"role": "user", "content": input_message.content})
     response = client.chat.completions.create(
@@ -283,11 +275,11 @@ async def get_math_response(input_message: discord.Message, ctx: commands.Contex
         return
     print(f"[TheMathGuysBot]: {response.choices[0].message.content}")
     message_history.math_messages.append({"role": "assistant", "content": response.choices[0].message.content})
-    content = response.choices[0].message.content.replace("\\[", "$$").replace("\\]", "$$").replace("\\(", "$").replace("\\)", "$")
-    content = LATEX_TEMPLATE.replace("REPLACE_ME", content)
-    with open("math.tex", "w") as fp:
-        fp.write(content)
-    subprocess.check_call(["pdflatex", "-shell-escape", "math.tex"])
+    content = response.choices[0].message.content
+    pdf = MarkdownPdf(toc_level=2)
+    pdf.m_d = MarkdownIt("js-default", options_update={"highlight": highlight_code}).use(texmath_plugin).use(amsmath_plugin).use(footnote_plugin).enable('table')
+    pdf.add_section(Section(content, toc=False), user_css="* {color: #ebebeb;}\n\nbody {background-color: #161616;}")
+    pdf.save("math.pdf")
     pdf = pymupdf.open("math.pdf")
     pages = [pdf.load_page(i) for i in range(pdf.page_count)]
     pixs = [page.get_pixmap() for page in pages]
