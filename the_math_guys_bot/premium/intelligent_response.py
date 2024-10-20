@@ -283,7 +283,7 @@ async def get_math_response(input_message: discord.Message, ctx: commands.Contex
         return
     print(f"[TheMathGuysBot]: {response.choices[0].message.content}")
     message_history.math_messages.append({"role": "assistant", "content": response.choices[0].message.content})
-    content = response.choices[0].message.content
+    content = response.choices[0].message.content.replace("\\[", "$$").replace("\\]", "$$").replace("\\(", "$").replace("\\)", "$")
     content = LATEX_TEMPLATE.replace("REPLACE_ME", content)
     with open("math.tex", "w") as fp:
         fp.write(content)
