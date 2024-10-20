@@ -4,14 +4,10 @@ import base64
 import os
 from pathlib import Path
 import pprint
+import subprocess
 from shutil import rmtree, make_archive
 from typing import Literal
-from markdown_it import MarkdownIt
-from mdit_py_plugins.dollarmath import dollarmath_plugin
-from mdit_py_plugins.amsmath import amsmath_plugin
-from mdit_py_plugins.footnote import footnote_plugin
-import fitz as pymupdf
-from pyhtml2pdf import converter
+import re
 
 import discord
 from discord.ext import pages, commands
@@ -265,28 +261,21 @@ def get_pods_data(pods: list[dict[str, str]]) -> tuple[list[str], list[str]]:
     return text_results, image_results
 
 
-HTML_TEMPLATE: str = """
-<!DOCTYPE html>
-<!-- KaTeX requires the use of the HTML5 doctype. Without it, KaTeX may not render properly -->
-<html>
-  <head>
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css" integrity="sha384-nB0miv6/jRmo5UMMR1wu3Gz6NLsoTkbqJghGIsx//Rlm+ZU03BU6SQNC66uf4l5+" crossorigin="anonymous">
-
-    <!-- The loading of KaTeX is deferred to speed up page rendering -->
-    <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js" integrity="sha384-7zkQWkzuo3B5mTepMUcHkMB5jZaolc2xDwL6VFqjFALcbeS9Ggm/Yr2r3Dy4lfFg" crossorigin="anonymous"></script>
-
-    <!-- To automatically render math in text elements, include the auto-render extension: -->
-    <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/contrib/auto-render.min.js" integrity="sha384-43gviWU0YVjaDtb/GhzOouOXtZMP/7XUzwPTstBeZFe/+rCMvRwr4yROQP43s0Xk" crossorigin="anonymous"
-        onload="renderMathInElement(document.body);"></script>
-  </head>
-  <body>
-    REPLACE_ME
-  </body>
-</html>"""
-
-
 async def get_math_response(input_message: discord.Message, ctx: commands.Context) -> None:
-    message_history.math_messages.append({"role": "user", "content": input_message.content})
+    imgs = await get_images(input_message)
+    imgs = [{"type": "image_url", "image_url": {"url": f"data:{content_type};base64,{image_data}"}} for content_type, image_data in imgs]
+    content = input_message.content
+    if imgs:
+        response = client.chat.completions.create(
+            model="gpt-4o-2024-08-06",
+            messages=[
+                {"role": "system", "content": "Solo debes transcribir a texto LaTeX las imágenes que se te pasen, sin resolver nada."},
+                {"role": "user", "content": [{"type": "text", "text": "Transcribe a LaTeX el contenido de las imágenes, por favor."}, *imgs]}
+            ]
+        )
+        latex = response.choices[0].message.content
+        content += f"\n\nContenido de las imágenes en LaTeX:\n{latex}"
+    message_history.math_messages.append({"role": "user", "content": content})
     response = client.chat.completions.create(
         model="o1-mini",
         messages=message_history.math_messages
@@ -296,21 +285,14 @@ async def get_math_response(input_message: discord.Message, ctx: commands.Contex
     print(f"[TheMathGuysBot]: {response.choices[0].message.content}")
     message_history.math_messages.append({"role": "assistant", "content": response.choices[0].message.content})
     content = response.choices[0].message.content
-    m_d = MarkdownIt(options_update={"highlight": highlight_code}).use(dollarmath_plugin).use(footnote_plugin).enable('table')
-    with open("math.html", "w", encoding="utf-8") as fp:
-        fp.write(HTML_TEMPLATE.replace("REPLACE_ME", m_d.render(content)))
-    path = os.path.abspath("math.html")
-    converter.convert(f"file://{path}", "math.pdf", timeout=5)
-    pdf = pymupdf.open("math.pdf")
-    pages = [pdf.load_page(i) for i in range(pdf.page_count)]
-    pixs = [page.get_pixmap() for page in pages]
-    file_names = [f"page{i}.png" for i in range(len(pixs))]
-    for pix, file_name in zip(pixs, file_names):
-        pix.pil_save(file_name)
-    await ctx.send(files=[discord.File(file_name) for file_name in file_names], reference=input_message)
-    pdf.close()
-    for file_name in file_names:
-        os.remove(file_name)
+    content = content.replace("\\[", "$$").replace("\\]", "$$").replace("\\(", "$").replace("\\)", "$")
+    # Make sure that the LaTeX is in a single line
+    regex = re.compile(r"(\$\$.*?\$\$|\$.*?\$)", re.DOTALL)
+    content = regex.sub(lambda match: match.group().replace("\n", ""), content)
+    with open("math.md", "w", encoding="utf-8") as fp:
+        fp.write(content)
+    subprocess.run(["node", "md2image.js"])
+    await ctx.send(file=discord.File("math.png"), reference=input_message)
 
 
 async def get_research_response(message: discord.Message, ctx: commands.Context) -> None:
