@@ -294,7 +294,7 @@ async def get_math_response(input_message: discord.Message, ctx: commands.Contex
 
     images = (Path.cwd() / "images").iterdir()
 
-    await ctx.send("Aquí tienes la solución al problema planteado:", files=[discord.File(image) for image in images], reference=input_message)
+    await ctx.send("Aquí tienes la solución al problema planteado:", files=[discord.File(image) for image in sorted(images, key=lambda x: x.name)], reference=input_message)
 
 
 async def get_research_response(message: discord.Message, ctx: commands.Context) -> None:
