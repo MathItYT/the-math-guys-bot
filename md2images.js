@@ -60,7 +60,7 @@ const main = async () => {
     ${marked.parse(markdown)}
   </body>
 </html>`;
-    const browser = await puppeteer.launch({ headless: true });
+    const browser = await puppeteer.launch({ headless: true, args: ['--no-sandbox', '--disable-setuid-sandbox'] });
     const page = await browser.newPage();
     await page.setContent(html);
     await page.pdf({
