@@ -1,105 +1,118 @@
-¡Hola! Claro que sí, te ayudaré a resolver el sistema de ecuaciones que has proporcionado. Vamos a resolverlo paso a paso.
+¡Hola! Claro que sí, vamos a resolver el sistema de ecuaciones que has proporcionado. 
 
-## Sistema de Ecuaciones
+El sistema es:
 
-$$\begin{cases} \dfrac{x - 2}{4} - \dfrac{y - x}{3} = x - 7 \\ \dfrac{3x - y}{8} - \dfrac{2}{3y - x} = y - 13 \end{cases}$$
+$$ \begin{cases}  \dfrac{x-2}{4} - \dfrac{y-x}{3} = x-7 \\  \dfrac{3x-y}{8} - \dfrac{2}{3} \cdot \dfrac{y-x}{6} = y-13  \end{cases} $$
 
-### **Primera Ecuación**
+### Paso 1: Simplificar la Primera Ecuación
 
-$$\frac{x - 2}{4} - \frac{y - x}{3} = x - 7$$
+$$ \dfrac{x-2}{4} - \dfrac{y - x}{3} = x - 7 $$
 
-**Paso 1:** Encontrar un denominador común para las fracciones, que es 12.
+Multiplicamos ambos lados por **12** (el mínimo común múltiplo de 4 y 3) para eliminar los denominadores:
 
-$$\frac{3(x - 2)}{12} - \frac{4(y - x)}{12} = x - 7$$
+$$ 12 \cdot \left( \dfrac{x-2}{4} - \dfrac{y - x}{3} \right) = 12 \cdot (x - 7) $$
 
-**Paso 2:** Simplificar la ecuación.
+Simplificando:
 
-$$\frac{3x - 6 - 4y + 4x}{12} = x - 7 \\\frac{7x - 6 - 4y}{12} = x - 7$$
+$$ 3(x - 2) - 4(y - x) = 12x - 84 $$
 
-**Paso 3:** Eliminar el denominador multiplicando ambos lados por 12.
+Expandimos los términos:
 
-$$7x - 6 - 4y = 12x - 84$$
+$$ 3x - 6 - 4y + 4x = 12x - 84 $$
 
-**Paso 4:** Reorganizar los términos para aislar las variables.
+Combinamos términos semejantes:
 
-$$7x - 12x - 4y = -84 + 6 \\-5x - 4y = -78 \\5x + 4y = 78 \quad \text{(Ecuación A)}$$
+$$ 7x - 4y - 6 = 12x - 84 $$
 
-### **Segunda Ecuación**
+Llevamos todas las variables al lado izquierdo y las constantes al derecho:
 
-$$\frac{3x - y}{8} - \frac{2}{3y - x} = y - 13$$
+$$ 7x - 4y - 12x = -84 + 6 $$
 
-**Paso 1:** Despejar una de las variables usando la Ecuación A. Por ejemplo, despejamos $ x $:
+$$ -5x - 4y = -78 $$
 
-$$5x + 4y = 78 \\5x = 78 - 4y \\x = \frac{78 - 4y}{5}$$
+Multiplicamos por **-1** para simplificar:
 
-**Paso 2:** Sustituir $ x $ en la segunda ecuación.
+$$ 5x + 4y = 78 \quad \text{(Ecuación 1)} $$
 
-$$\frac{3\left(\frac{78 - 4y}{5}\right) - y}{8} - \frac{2}{3y - \left(\frac{78 - 4y}{5}\right)} = y - 13$$
+### Paso 2: Simplificar la Segunda Ecuación
 
-**Paso 3:** Simplificar las expresiones.
+$$ \dfrac{3x - y}{8} - \dfrac{2}{3} \cdot \dfrac{y - x}{6} = y - 13 $$
 
-$$\frac{\frac{234 - 12y}{5} - y}{8} - \frac{2}{\frac{19y - 78}{5}} = y - 13 \\\frac{234 - 12y - 5y}{40} - \frac{10}{19y - 78} = y - 13 \\\frac{234 - 17y}{40} - \frac{10}{19y - 78} = y - 13$$
+Primero simplificamos el segundo término:
 
-**Paso 4:** Multiplicar toda la ecuación por el común denominador $ 40(19y - 78) $ para eliminar los denominadores.
+$$ \dfrac{2}{3} \cdot \dfrac{y - x}{6} = \dfrac{2(y - x)}{18} = \dfrac{y - x}{9} $$
 
-$$(234 - 17y)(19y - 78) - 400 = 40(y - 13)(19y - 78)$$
+Ahora la ecuación queda:
 
-**Paso 5:** Expandir y simplificar.
+$$ \dfrac{3x - y}{8} - \dfrac{y - x}{9} = y - 13 $$
 
-$$-323y^2 + 5772y - 18652 = 760y^2 - 13000y + 40560$$
+Multiplicamos ambos lados por **72** (el mínimo común múltiplo de 8 y 9) para eliminar los denominadores:
 
-$$1083y^2 - 18772y + 59212 = 0$$
+$$ 72 \cdot \left( \dfrac{3x - y}{8} - \dfrac{y - x}{9} \right) = 72 \cdot (y - 13) $$
 
-### **Resolución de la Ecuación Cuadrática**
+Simplificando:
 
-Tenemos la ecuación cuadrática:
+$$ 9(3x - y) - 8(y - x) = 72y - 936 $$
 
-$$1083y^2 - 18772y + 59212 = 0$$
+Expandimos los términos:
 
-Usamos la fórmula cuadrática:
+$$ 27x - 9y - 8y + 8x = 72y - 936 $$
 
-$$y = \frac{18772 \pm \sqrt{(18772)^2 - 4 \cdot 1083 \cdot 59212}}{2 \cdot 1083}$$
+Combinamos términos semejantes:
 
-Calculando el discriminante $ D $:
+$$ 35x - 17y = 72y - 936 $$
 
-$$D = 18772^2 - 4 \cdot 1083 \cdot 59212 = 352,387,984 - 259,706,384 = 92,681,600$$
+Llevamos todas las variables al lado izquierdo y las constantes al derecho:
 
-$$\sqrt{D} \approx 9630.24$$
+$$ 35x - 17y - 72y = -936 $$
 
-**Soluciones para $ y $:**
+$$ 35x - 89y = -936 \quad \text{(Ecuación 2)} $$
 
-$$y = \frac{18772 \pm 9630.24}{2166}$$
+### Paso 3: Resolver el Sistema de Ecuaciones
 
-1. **Primera Solución:**
+Ahora tenemos el siguiente sistema lineal:
 
-$$y \approx \frac{18772 + 9630.24}{2166} \approx \frac{28402.24}{2166} \approx 13.11$$
+$$ \begin{cases} 5x + 4y = 78 \quad \text{(Ecuación 1)} \\ 35x - 89y = -936 \quad \text{(Ecuación 2)} \end{cases} $$
 
-2. **Segunda Solución:**
+**Método de Eliminación:**
 
-$$y \approx \frac{18772 - 9630.24}{2166} \approx \frac{9141.76}{2166} \approx 4.22$$
+Multiplicamos la **Ecuación 1** por **7** para alinear los coeficientes de $ x $:
 
-### **Obtención de $ x $ correspondiente**
+$$ 7(5x + 4y) = 7 \cdot 78 $$
 
-Usamos la Ecuación A: $ 5x + 4y = 78 $
+$$ 35x + 28y = 546 \quad \text{(Ecuación 1a)} $$
 
-1. **Para $ y \approx 13.11 $:**
+Ahora restamos la **Ecuación 2** de la **Ecuación 1a**:
 
-$$5x + 4(13.11) = 78 \\5x + 52.44 = 78 \\5x = 25.56 \\x \approx 5.11$$
+$$ (35x + 28y) - (35x - 89y) = 546 - (-936) $$
 
-2. **Para $ y \approx 4.22 $:**
+Simplificando:
 
-$$5x + 4(4.22) = 78 \\5x + 16.88 = 78 \\5x = 61.12 \\x \approx 12.22$$
+$$ 117y = 1482 $$
 
-### **Soluciones del Sistema**
+Resolviendo para $ y $:
 
-Por lo tanto, las soluciones aproximadas del sistema son:
+$$ y = \dfrac{1482}{117} = 12.666\ldots = \dfrac{38}{3} $$
 
-1. **Primera Solución:**
-   $$   (x, y) \approx (5.11, \ 13.11)   $$
+Ahora sustituimos $ y = \dfrac{38}{3} $ en la **Ecuación 1** para encontrar $ x $:
 
-2. **Segunda Solución:**
-   $$   (x, y) \approx (12.22, \ 4.22)   $$
+$$ 5x + 4\left( \dfrac{38}{3} \right) = 78 $$
 
----
+$$ 5x + \dfrac{152}{3} = 78 $$
 
-**Nota:** Debido a la complejidad de la segunda ecuación, las soluciones se presentan de manera aproximada. Para obtener valores exactos, se necesitaría resolver la ecuación cuadrática con mayor precisión o utilizar métodos numéricos avanzados.
+Restamos $ \dfrac{152}{3} $ de ambos lados:
+
+$$ 5x = 78 - \dfrac{152}{3} = \dfrac{234}{3} - \dfrac{152}{3} = \dfrac{82}{3} $$
+
+Finalmente, resolvemos para $ x $:
+
+$$ x = \dfrac{82}{3} \div 5 = \dfrac{82}{15} $$
+
+### Solución Final
+
+$$ x = \dfrac{82}{15} \approx 5.467 $$
+$$ y = \dfrac{38}{3} \approx 12.667 $$
+
+Por lo tanto, la solución del sistema de ecuaciones es:
+
+$$ x = \dfrac{82}{15}, \quad y = \dfrac{38}{3} $$

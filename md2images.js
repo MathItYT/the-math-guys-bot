@@ -3,8 +3,27 @@ const fs = require('fs');
 const hljs = require('highlight.js');
 const { markedHighlight } = require('marked-highlight');
 const markedKatex = require('marked-katex-extension');
+const puppeteer = require('puppeteer');
+const { PDFiumLibrary } = require('@hyzyla/pdfium');
+const sharp = require('sharp');
 
-const main = () => {
+async function renderFunction(options) {
+    return await sharp(options.data, {
+        raw: {
+        width: options.width,
+        height: options.height,
+        channels: 4,
+        },
+    })
+        .png()
+        .toBuffer();
+}
+
+const main = async () => {
+    if (fs.existsSync('images')) {
+        fs.rmdirSync('images', { recursive: true });
+    }
+    fs.mkdirSync('images');
     const marked = new Marked(
         markedHighlight({
             emptyLangClass: 'hljs',
@@ -31,8 +50,6 @@ const main = () => {
       }
       body {
           background-color: #161616;
-          width: 3840px;
-        height: 2160px;
       }
       p, h1, h2, h3, h4, h5, h6 {
             font-family: 'Roboto', sans-serif;
@@ -43,7 +60,34 @@ const main = () => {
     ${marked.parse(markdown)}
   </body>
 </html>`;
-    fs.writeFileSync('math.html', html);
+    const browser = await puppeteer.launch({ headless: true });
+    const page = await browser.newPage();
+    await page.setContent(html);
+    await page.pdf({
+        path: 'math.pdf',
+        margin: { top: '0px', right: '0px', bottom: '0px', left: '0px' },
+        printBackground: true,
+        format: 'A4',
+    });
+    await browser.close();
+    const buff = fs.readFileSync('math.pdf');
+    const library = await PDFiumLibrary.init();
+
+    const document = await library.loadDocument(buff);
+
+    for (const page of document.pages()) {
+        console.log(`${page.number} - rendering...`);
+
+        const image = await page.render({
+            scale: 3,
+            render: renderFunction,
+        });
+
+        fs.writeFileSync(`images/math-${page.number}.png`, Buffer.from(image.data));
+    }
+
+    document.destroy();
+    library.destroy();
 };
 
 main();

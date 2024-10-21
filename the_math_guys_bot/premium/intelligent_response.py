@@ -287,36 +287,18 @@ async def get_math_response(input_message: discord.Message, ctx: commands.Contex
     message_history.math_messages.append({"role": "assistant", "content": response.choices[0].message.content})
     content = response.choices[0].message.content
     content = content.replace("\\[", "$$").replace("\\]", "$$").replace("\\(", "$").replace("\\)", "$")
-    # Make sure that the LaTeX is in a single line
-    regex = re.compile(r"(\$\$.*?\$\$|\$.*?\$)", re.DOTALL)
-    content = regex.sub(lambda match: match.group().replace("\n", ""), content)
+    # Make sure that dollar-wrapped math is one-lined. Examples:
+    # $$\begin{aligned}2x + 3 &= 5\\2x &= 2\\x &= 1\end{aligned}$$
+    # $$2x + 3 = 5\\2x = 2\\x = 1$$
+    # Replace all newlines inside math with space
+    content = re.sub(r"\$\$.*?\$\$", lambda m: m.group().replace("\n", " "), content, flags=re.DOTALL)
+    content = re.sub(r"\$.*?\$", lambda m: m.group().replace("\n", " "), content, flags=re.DOTALL)
+
     with open("math.md", "w", encoding="utf-8") as fp:
         fp.write(content)
-    subprocess.run(["node", "md2html.js"])
-    with open("math.html", "r", encoding="utf-8") as fp:
-        html = fp.read()
-    story = pymupdf.Story(html=html)
-    writer = pymupdf.DocumentWriter("math.pdf")
-    MEDIABOX = pymupdf.paper_rect("letter")  # output page format: Letter
-    WHERE = MEDIABOX + (36, 36, -36, -36)  # leave borders of 0.5 inches
-    more = 1
+    subprocess.run(["node", "md2images.js"])
 
-    while more:
-        device = writer.begin_page(MEDIABOX)
-        more, _ = story.place(WHERE)
-        story.draw(device)
-        writer.end_page()
-
-    writer.close()
-
-    images = []
-    pdf = pymupdf.open("math.pdf")
-    for page in pdf:
-        pix = page.get_pixmap()
-        filename = f"page-{page.number}.png"
-        pix.save(filename)
-        images.append(filename)
-    pdf.close()
+    images = (Path.cwd() / "images").iterdir()
 
     await ctx.send("Aquí tienes la solución al problema planteado:", files=[discord.File(image) for image in images], reference=input_message)
 
