@@ -21,7 +21,7 @@ async function renderFunction(options) {
 
 const main = async () => {
     if (fs.existsSync('images')) {
-        fs.rmdirSync('images', { recursive: true });
+        fs.rmSync('images', { recursive: true });
     }
     fs.mkdirSync('images');
     const marked = new Marked(
@@ -33,7 +33,7 @@ const main = async () => {
                 return hljs.highlight(code, { language }).value;
             }
         }),
-        markedKatex()
+        markedKatex({throwOnError: false, nonStandard: true})
     );
     const markdown = fs.readFileSync('math.md', 'utf-8');
     const html = `<!DOCTYPE html>
