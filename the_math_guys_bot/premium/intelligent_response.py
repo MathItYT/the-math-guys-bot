@@ -287,12 +287,6 @@ async def get_math_response(input_message: discord.Message, ctx: commands.Contex
     message_history.math_messages.append({"role": "assistant", "content": response.choices[0].message.content})
     content = response.choices[0].message.content
     content = content.replace("\\[", "$$").replace("\\]", "$$").replace("\\(", "$").replace("\\)", "$")
-    # Make sure that dollar-wrapped math is one-lined. Examples:
-    # $$\begin{aligned}2x + 3 &= 5\\2x &= 2\\x &= 1\end{aligned}$$
-    # $$2x + 3 = 5\\2x = 2\\x = 1$$
-    # Replace all newlines inside math with space
-    content = re.sub(r"\$\$.*?\$\$", lambda m: m.group().replace("\n", " "), content, flags=re.DOTALL)
-    content = re.sub(r"\$.*?\$", lambda m: m.group().replace("\n", " "), content, flags=re.DOTALL)
 
     with open("math.md", "w", encoding="utf-8") as fp:
         fp.write(content)
