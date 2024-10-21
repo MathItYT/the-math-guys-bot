@@ -51,7 +51,7 @@ const main = async () => {
       body {
           background-color: #161616;
       }
-      p, h1, h2, h3, h4, h5, h6 {
+      p, h1, h2, h3, h4, h5, h6, strong, tr, th, td, blockquote, a {
             font-family: 'Roboto', sans-serif;
         }
   </style>
@@ -63,6 +63,7 @@ const main = async () => {
     const browser = await puppeteer.launch({ headless: true, args: ['--no-sandbox', '--disable-setuid-sandbox'] });
     const page = await browser.newPage();
     await page.setContent(html);
+    await setTimeout(() => {}, 5000);
     await page.pdf({
         path: 'math.pdf',
         margin: { top: '0px', right: '0px', bottom: '0px', left: '0px' },
